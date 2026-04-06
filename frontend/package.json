@@ -14,8 +14,10 @@
     "build:renderer": "vite build",
     "build:main": "tsc -p tsconfig.main.json",
     "build:main:typecheck": "tsc -p tsconfig.main.json --noEmit",
-    "package": "npm run build && electron-builder build --windows",
-    "package:portable": "npm run build && electron-builder build --windows portable",
+    "clean": "rimraf dist release",
+    "prepackage": "npm run clean && npm run build",
+    "package": "npm run prepackage && electron-builder build --windows",
+    "package:portable": "npm run prepackage && electron-builder build --windows portable",
     "start": "electron ."
   },
   "dependencies": {
@@ -41,6 +43,7 @@
     "electron": "^31.0.0",
     "electron-builder": "^24.13.0",
     "postcss": "^8.4.0",
+    "rimraf": "^5.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.51.0",
