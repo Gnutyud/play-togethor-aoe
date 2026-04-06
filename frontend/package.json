@@ -1,6 +1,6 @@
 {
   "name": "aoe-launcher-frontend",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Gnutyud",
   "repository": "https://github.com/Gnutyud/play-togethor-aoe",
   "description": "AOE I Online Multiplayer Launcher - Electron App",
@@ -54,14 +54,22 @@
   "build": {
     "appId": "com.aoe.launcher",
     "productName": "AOE Launcher",
+    "asar": true,
     "directories": {
       "output": "release",
       "buildResources": "build"
     },
     "files": [
       "dist/**/*",
-      "package.json",
-      "resources/**/*"
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/",
+        "to": "resources/",
+        "filter": ["**/*"]
+      }
     ],
     "win": {
       "target": [
@@ -72,7 +80,7 @@
           ]
         }
       ],
-      "icon": "build/icon.ico"
+      "icon": "build/icon.png"
     },
     "nsis": {
       "oneClick": false,
