@@ -1,6 +1,8 @@
 {
   "name": "aoe-launcher-frontend",
   "version": "1.0.0",
+  "author": "Gnutyud",
+  "repository": "https://github.com/Gnutyud/play-togethor-aoe",
   "description": "AOE I Online Multiplayer Launcher - Electron App",
   "main": "dist/main/main/main.js",
   "scripts": {
