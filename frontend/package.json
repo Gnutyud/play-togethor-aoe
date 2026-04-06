@@ -1,0 +1,82 @@
+{
+  "name": "aoe-launcher-frontend",
+  "version": "1.0.0",
+  "description": "AOE I Online Multiplayer Launcher - Electron App",
+  "main": "dist/main/main/main.js",
+  "scripts": {
+    "dev": "npm run build:main && concurrently -n renderer,main,electron \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:electron\"",
+    "dev:renderer": "vite",
+    "dev:main": "tsc -p tsconfig.main.json --watch --preserveWatchOutput",
+    "dev:electron": "wait-on http://localhost:5173 dist/main/main/main.js && cross-env NODE_ENV=development electron .",
+    "build": "npm run build:renderer && npm run build:main",
+    "build:renderer": "vite build",
+    "build:main": "tsc -p tsconfig.main.json",
+    "package": "npm run build && electron-builder build --windows",
+    "package:portable": "npm run build && electron-builder build --windows portable",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "electron-squirrel-startup": "^1.0.1",
+    "electron-store": "^8.2.0",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@radix-ui/react-dialog": "^1.0.0",
+    "@radix-ui/react-label": "^2.0.0",
+    "@radix-ui/react-slot": "^1.0.0",
+    "@types/node": "^20.14.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "autoprefixer": "^10.4.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.0",
+    "postcss": "^8.4.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.51.0",
+    "react-router-dom": "^6.23.0",
+    "tailwind-merge": "^2.3.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0",
+    "wait-on": "^7.2.0",
+    "winston": "^3.13.0",
+    "zod": "^3.23.8"
+  },
+  "build": {
+    "appId": "com.aoe.launcher",
+    "productName": "AOE Launcher",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json",
+      "resources/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
