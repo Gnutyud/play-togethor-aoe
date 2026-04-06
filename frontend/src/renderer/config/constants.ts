@@ -16,7 +16,7 @@ export const APP_CONFIG = {
   MAX_PLAYERS: 8,
 
   // API Configuration
-  API_URL: import.meta.env.VITE_API_URL || "http://localhost:3000",
+  API_URL: import.meta.env.VITE_API_URL || "https://play-togethor-aoe.vercel.app",
 
   // Room types
   ROOM_TYPE: {

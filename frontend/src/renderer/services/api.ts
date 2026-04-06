@@ -8,7 +8,7 @@ import {
 } from "../../shared/types";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "https://aoe-launcher-api.vercel.app";
+  import.meta.env.VITE_API_URL || "https://play-togethor-aoe.vercel.app";
 
 class ApiService {
   private client: AxiosInstance;
