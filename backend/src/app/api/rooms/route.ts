@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
    
     // Allocate a network from the pool
     const networkPool = getNetworkPool();
-    const network = networkPool.allocate();
+    const network = await networkPool.allocate();
    
     if (!network) {
       return NextResponse.json(

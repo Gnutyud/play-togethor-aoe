@@ -1,8 +1,12 @@
+import Room from '../models/Room';
+
 /**
  * RadminNetworkPool Service
  * Manages dynamic allocation of Radmin VPN networks for custom rooms
  * Network1-10: Reserved for default rooms
  * Network11-50: Pool for custom rooms (40 networks available)
+ * 
+ * ENHANCED: Stateless implementation for Vercel/Serverless
  */
 
 interface RadminNetwork {
@@ -11,46 +15,43 @@ interface RadminNetwork {
 }
 
 class RadminNetworkPool {
-  private networks: RadminNetwork[] = [];
-  private allocatedNetworks: Set<string> = new Set();
+  private allNetworks: RadminNetwork[] = [];
 
   constructor() {
-    this.initializePool();
+    this.loadNetworksFromEnv();
   }
 
   /**
-   * Initialize the network pool from environment variables
-   * Load Network11-50 for custom room allocation
+   * Load all potential networks from environment variables
    */
-  private initializePool() {
+  private loadNetworksFromEnv() {
     for (let i = 11; i <= 50; i++) {
       const networkId = process.env[`RADMIN_NETWORK_${i}_ID`];
       const networkPassword = process.env[`RADMIN_NETWORK_${i}_PASSWORD`];
 
       if (networkId && networkPassword) {
-        this.networks.push({
+        this.allNetworks.push({
           id: networkId,
           password: networkPassword,
         });
       }
     }
-
-    console.log(
-      `✅ RadminNetworkPool initialized with ${this.networks.length} networks`
-    );
   }
 
   /**
-   * Allocate a network from the pool
-   * Returns null if no networks available
+   * Allocate a network from the pool by checking DB for currently used ones
    */
-  allocate(): RadminNetwork | null {
-    const availableNetwork = this.networks.find(
-      (network) => !this.allocatedNetworks.has(network.id)
+  async allocate(): Promise<RadminNetwork | null> {
+    // Get all network IDs currently used by rooms
+    const usedNetworkIds = await Room.find().distinct('radminNetworkId');
+    const usedSet = new Set(usedNetworkIds);
+
+    // Find the first network not in the used set
+    const availableNetwork = this.allNetworks.find(
+      (network) => !usedSet.has(network.id)
     );
 
     if (availableNetwork) {
-      this.allocatedNetworks.add(availableNetwork.id);
       console.log(`🔗 Allocated network: ${availableNetwork.id}`);
       return availableNetwork;
     }
@@ -60,41 +61,30 @@ class RadminNetworkPool {
   }
 
   /**
-   * Release a network back to the pool
+   * Release is no longer needed as a separate step because 
+   * deleting the room from DB automatically "releases" the network ID
    */
   release(networkId: string): void {
-    if (this.allocatedNetworks.has(networkId)) {
-      this.allocatedNetworks.delete(networkId);
-      console.log(`🔓 Released network: ${networkId}`);
-    }
+    console.log(`🔓 Network ${networkId} will be available once the room is deleted from DB.`);
   }
 
   /**
-   * Get total available networks
+   * Get total available networks count
    */
-  getAvailableCount(): number {
-    return this.networks.length - this.allocatedNetworks.size;
+  async getAvailableCount(): Promise<number> {
+    const usedNetworkIds = await Room.find().distinct('radminNetworkId');
+    return this.allNetworks.length - usedNetworkIds.length;
   }
 
   /**
-   * Get network by ID (for verification)
+   * Get network details by ID
    */
   getNetworkById(networkId: string): RadminNetwork | null {
-    return this.networks.find((n) => n.id === networkId) || null;
-  }
-
-  /**
-   * Mark a network as allocated (for restoring state from DB)
-   */
-  markAsAllocated(networkId: string): void {
-    const network = this.getNetworkById(networkId);
-    if (network) {
-      this.allocatedNetworks.add(networkId);
-    }
+    return this.allNetworks.find((n) => n.id === networkId) || null;
   }
 }
 
-// Singleton instance
+// Singleton instance (still useful for caching the ENV load, but methods are DB-backed)
 let networkPoolInstance: RadminNetworkPool | null = null;
 
 export function getNetworkPool(): RadminNetworkPool {
@@ -105,3 +95,4 @@ export function getNetworkPool(): RadminNetworkPool {
 }
 
 export default RadminNetworkPool;
+

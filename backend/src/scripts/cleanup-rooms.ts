@@ -71,7 +71,7 @@ async function cleanupEmptyCustomRooms() {
     );
 
     // Show available networks count
-    const availableCount = networkPool.getAvailableCount();
+    const availableCount = await networkPool.getAvailableCount();
     console.log(`📊 Available networks in pool: ${availableCount}/40\n`);
 
     process.exit(0);

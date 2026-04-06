@@ -11,9 +11,11 @@ import { getNetworkPool } from "@/lib/services/RadminNetworkPool";
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     // Get user from token
     const authHeader = request.headers.get("authorization");
     const tokenPayload = await getUserFromToken(authHeader);
@@ -25,7 +27,7 @@ export async function DELETE(
     await connectDB();
 
     // Find room
-    const room = await Room.findById(params.id);
+    const room = await Room.findById(id);
     if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
@@ -60,7 +62,7 @@ export async function DELETE(
     networkPool.release(room.radminNetworkId);
 
     // Delete room
-    await Room.findByIdAndDelete(params.id);
+    await Room.findByIdAndDelete(id);
 
     return NextResponse.json(
       {

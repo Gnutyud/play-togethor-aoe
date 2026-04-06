@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import { app } from "electron";
@@ -140,47 +140,59 @@ export class RadminVpnManager {
     networkId: string,
     password: string
   ): Promise<{ success: boolean; error?: string }> {
-    try {
-      // Get script path (in development or production)
-      const scriptPath = app.isPackaged
-        ? path.join(process.resourcesPath, "resources", "radmin-connect.ps1")
-        : path.join(__dirname, "../../../resources/radmin-connect.ps1");
+    return new Promise((resolve) => {
+      try {
+        const scriptPath = app.isPackaged
+          ? path.join(process.resourcesPath, "resources", "radmin-connect.ps1")
+          : path.join(__dirname, "../../../resources/radmin-connect.ps1");
 
-      logger.info(`Using PowerShell script: ${scriptPath}`);
+        logger.info(`Using PowerShell script: ${scriptPath}`);
 
-      // Execute PowerShell script
-      const command = `powershell.exe -ExecutionPolicy Bypass -File "${scriptPath}" -NetworkId "${networkId}" -Password "${password}"`;
+        // Use spawn with array of arguments to prevent command injection
+        const ps = spawn("powershell.exe", [
+          "-ExecutionPolicy", "Bypass",
+          "-File", scriptPath,
+          "-NetworkId", networkId,
+          "-Password", password
+        ]);
 
-      const { stdout, stderr } = await execAsync(command, {
-        timeout: 15000, // 15 seconds timeout
-      });
+        let stdout = "";
+        let stderr = "";
 
-      logger.info("PowerShell output:", stdout);
+        ps.stdout.on("data", (data: any) => {
+          stdout += data.toString();
+        });
 
-      if (stderr && !stderr.includes("WARNING")) {
-        logger.error("PowerShell error:", stderr);
-        return {
-          success: false,
-          error: stderr,
-        };
+        ps.stderr.on("data", (data: any) => {
+          stderr += data.toString();
+        });
+
+        // Set a 15 second timeout
+        const timeout = setTimeout(() => {
+          ps.kill();
+          logger.error("PowerShell connect timed out after 15s");
+          resolve({ success: false, error: "Connection timed out. Please check Radmin VPN." });
+        }, 15000);
+
+        ps.on("close", (code: number) => {
+          clearTimeout(timeout);
+          logger.info("PowerShell output:", stdout);
+
+          if (code !== 0 && !stdout.includes("successfully") && !stdout.includes("initiated")) {
+            logger.error("PowerShell stderr:", stderr);
+            resolve({ 
+              success: false, 
+              error: stderr.trim() || `Process exited with code ${code}` 
+            });
+          } else {
+            resolve({ success: true });
+          }
+        });
+      } catch (error: any) {
+        logger.error("Failed to spawn PowerShell:", error);
+        resolve({ success: false, error: error.message });
       }
-
-      // Check if connection was successful
-      if (stdout.includes("successfully") || stdout.includes("initiated")) {
-        return { success: true };
-      } else {
-        return {
-          success: false,
-          error: "Connection may have failed. Check Radmin VPN manually.",
-        };
-      }
-    } catch (error: any) {
-      logger.error("PowerShell execution failed:", error);
-      return {
-        success: false,
-        error: error.message || "Failed to execute PowerShell script",
-      };
-    }
+    });
   }
 
   /**
@@ -190,39 +202,32 @@ export class RadminVpnManager {
     success: boolean;
     error?: string;
   }> {
-    try {
-      // Get script path
-      const scriptPath = app.isPackaged
-        ? path.join(process.resourcesPath, "resources", "radmin-disconnect.ps1")
-        : path.join(__dirname, "../../../resources/radmin-disconnect.ps1");
+    return new Promise((resolve) => {
+      try {
+        const scriptPath = app.isPackaged
+          ? path.join(process.resourcesPath, "resources", "radmin-disconnect.ps1")
+          : path.join(__dirname, "../../../resources/radmin-disconnect.ps1");
 
-      logger.info(`Using PowerShell script: ${scriptPath}`);
+        const ps = spawn("powershell.exe", [
+          "-ExecutionPolicy", "Bypass",
+          "-File", scriptPath
+        ]);
 
-      // Execute PowerShell script
-      const command = `powershell.exe -ExecutionPolicy Bypass -File "${scriptPath}"`;
+        // 10 second timeout
+        const timeout = setTimeout(() => {
+          ps.kill();
+          resolve({ success: false, error: "Disconnect timed out" });
+        }, 10000);
 
-      const { stdout, stderr } = await execAsync(command, {
-        timeout: 10000, // 10 seconds timeout
-      });
-
-      logger.info("PowerShell output:", stdout);
-
-      if (stderr && !stderr.includes("WARNING")) {
-        logger.error("PowerShell error:", stderr);
-        return {
-          success: false,
-          error: stderr,
-        };
+        ps.on("close", (code: number) => {
+          clearTimeout(timeout);
+          resolve({ success: code === 0 });
+        });
+      } catch (error: any) {
+        logger.error("Failed to spawn PowerShell (disconnect):", error);
+        resolve({ success: false, error: error.message });
       }
-
-      return { success: true };
-    } catch (error: any) {
-      logger.error("PowerShell execution failed:", error);
-      return {
-        success: false,
-        error: error.message || "Failed to execute PowerShell script",
-      };
-    }
+    });
   }
 
   /**

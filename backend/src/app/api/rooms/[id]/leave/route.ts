@@ -7,9 +7,10 @@ import { getNetworkPool } from "@/lib/services/RadminNetworkPool";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Get user from token
     const authHeader = request.headers.get("authorization");
     const tokenPayload = await getUserFromToken(authHeader);
@@ -21,7 +22,7 @@ export async function POST(
     await connectDB();
 
     // Find room
-    const room = await Room.findById(params.id);
+    const room = await Room.findById(id);
     if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }

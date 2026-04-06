@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Vercel deployment region - Singapore for best ping from Vietnam
-  regions: ["sin1"],
 
   // API routes configuration
   experimental: {
