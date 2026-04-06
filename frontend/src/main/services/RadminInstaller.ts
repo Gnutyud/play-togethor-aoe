@@ -22,10 +22,9 @@ export class RadminInstaller {
    */
   private getInstallerPath(): string {
     if (app.isPackaged) {
-      // Production: installer is in resources folder
+      // Production: installer is directly in resources folder
       return path.join(
         process.resourcesPath,
-        "resources",
         RadminInstaller.INSTALLER_FILENAME
       );
     } else {

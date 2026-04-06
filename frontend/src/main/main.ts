@@ -42,15 +42,41 @@ const createWindow = () => {
     mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
+    // Multi-path strategy for robustness
+    const indexPaths = [
+      path.join(__dirname, "..", "..", "renderer", "index.html"),
+      path.join(__dirname, "..", "renderer", "index.html"),
+      path.join(__dirname, "..", "..", "..", "renderer", "index.html"),
+      path.join(__dirname, "index.html"),
+    ];
+
+    let loaded = false;
+    for (const p of indexPaths) {
+      try {
+        if (mainWindow) {
+          mainWindow.loadFile(p);
+          logger.info(`Successfully loaded UI from: ${p}`);
+          loaded = true;
+          break;
+        }
+      } catch (e) {
+        logger.debug(`Tried UI path ${p}, failed.`);
+      }
+    }
+
+    if (!loaded) {
+      logger.error("COULD NOT FIND index.html in any known location!");
+    }
   }
 
   // Setup IPC handlers
-  setupIpcHandlers(mainWindow);
+  if (mainWindow) {
+    setupIpcHandlers(mainWindow);
 
-  mainWindow.on("closed", () => {
-    mainWindow = null;
-  });
+    mainWindow.on("closed", () => {
+      mainWindow = null;
+    });
+  }
 
   logger.info("Main window created");
 };
