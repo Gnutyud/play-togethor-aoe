@@ -50,6 +50,14 @@ export const CreateRoomSchema = z.object({
     .min(2, "Room must allow at least 2 players")
     .max(8, "Room cannot exceed 8 players")
     .default(8),
+  radminNetworkId: z
+    .string()
+    .min(3, "Network ID must be at least 3 characters")
+    .max(50, "Network ID is too long"),
+  radminNetworkPassword: z
+    .string()
+    .min(1, "Network Password is required")
+    .max(50, "Network Password is too long"),
 });
 
 export type CreateRoomInput = z.infer<typeof CreateRoomSchema>;

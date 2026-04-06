@@ -15,9 +15,7 @@ export function useRooms() {
     setLastUpdate,
   } = useStore();
 
-  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
-    null
-  );
+  const sseRef = useRef<EventSource | null>(null);
   const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null
   );
@@ -33,28 +31,58 @@ export function useRooms() {
     }
   }, [setRooms, setLastUpdate]);
 
-  // Start polling for room updates
-  const startPolling = useCallback(() => {
-    if (isPolling) return;
+  // Start SSE for room updates
+  const startSSE = useCallback(() => {
+    if (sseRef.current) return;
 
-    setIsPolling(true);
-
-    // Initial fetch
+    setIsPolling(true); // Re-using isPolling to indicate "Realtime Active"
+    
+    // Initial fetch to be sure
     fetchRooms();
 
-    // Poll every 5 seconds
-    pollingIntervalRef.current = setInterval(() => {
-      fetchRooms();
-    }, APP_CONFIG.POLLING_INTERVAL);
-  }, [isPolling, setIsPolling, fetchRooms]);
+    const url = api.getRoomsEventSourceUrl();
+    const eventSource = new EventSource(url);
+    sseRef.current = eventSource;
 
-  // Stop polling
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'rooms_update') {
+          setRooms(data.rooms);
+          setLastUpdate(new Date().toISOString());
+        }
+      } catch (err) {
+        console.error("Failed to parse SSE message:", err);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.error("SSE Error:", err);
+      eventSource.close();
+      sseRef.current = null;
+      setIsPolling(false);
+      
+      // Auto-reconnect after 5 seconds
+      setTimeout(() => {
+        if (!sseRef.current) {
+          startSSE();
+        }
+      }, 5000);
+    };
+  }, [fetchRooms, setIsPolling, setRooms, setLastUpdate]);
+
+  // Start polling (now SSE)
+  const startPolling = useCallback(() => {
+    startSSE();
+  }, [startSSE]);
+
+  // Stop polling (SSE)
   const stopPolling = useCallback(() => {
     setIsPolling(false);
 
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-      pollingIntervalRef.current = null;
+    if (sseRef.current) {
+      sseRef.current.close();
+      sseRef.current = null;
     }
   }, [setIsPolling]);
 
@@ -109,8 +137,18 @@ export function useRooms() {
 
   // Create room
   const createRoom = useCallback(
-    async (name: string, password?: string) => {
-      const room = await api.createRoom(name, password);
+    async (
+      name: string,
+      radminNetworkId: string,
+      radminNetworkPassword: string,
+      password?: string
+    ) => {
+      const room = await api.createRoom(
+        name,
+        radminNetworkId,
+        radminNetworkPassword,
+        password
+      );
       await fetchRooms(); // Refresh room list
       return room;
     },

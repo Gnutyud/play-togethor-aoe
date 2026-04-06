@@ -17,12 +17,14 @@ export interface IRoom extends Document {
   ownerId?: string; // Only for custom rooms
   createdAt: Date;
   lastActivity: Date;
+  lastHeartbeat: Date;
   updatedAt: Date;
 
   // Instance methods
   addPlayer(userId: string, username: string): void;
   removePlayer(userId: string): void;
   updatePlayerHeartbeat(userId: string): void;
+  updateHeartbeat(): void;
 }
 
 const PlayerSchema = new Schema(
@@ -93,6 +95,10 @@ const RoomSchema: Schema<IRoom> = new Schema(
       type: Date,
       default: Date.now,
     },
+    lastHeartbeat: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: true,
@@ -103,6 +109,7 @@ const RoomSchema: Schema<IRoom> = new Schema(
 RoomSchema.index({ type: 1 });
 RoomSchema.index({ "players.userId": 1 });
 RoomSchema.index({ lastActivity: 1 });
+RoomSchema.index({ lastHeartbeat: 1 });
 
 // Virtual for current player count
 RoomSchema.virtual("playerCount").get(function () {
@@ -149,6 +156,12 @@ RoomSchema.methods.updatePlayerHeartbeat = function (userId: string) {
     player.lastSeen = new Date();
     this.lastActivity = new Date();
   }
+};
+
+// Method to update room-level heartbeat
+RoomSchema.methods.updateHeartbeat = function () {
+  this.lastHeartbeat = new Date();
+  this.lastActivity = new Date();
 };
 
 const Room: Model<IRoom> =

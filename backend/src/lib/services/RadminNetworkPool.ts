@@ -2,11 +2,9 @@ import Room from '../models/Room';
 
 /**
  * RadminNetworkPool Service
- * Manages dynamic allocation of Radmin VPN networks for custom rooms
+ * Manages allocation of Radmin VPN networks ONLY for default rooms
  * Network1-10: Reserved for default rooms
- * Network11-50: Pool for custom rooms (40 networks available)
- * 
- * ENHANCED: Stateless implementation for Vercel/Serverless
+ * Custom Rooms: Self-hosted by users (no longer managed via static pool)
  */
 
 interface RadminNetwork {
@@ -22,10 +20,10 @@ class RadminNetworkPool {
   }
 
   /**
-   * Load all potential networks from environment variables
+   * Load the 10 default networks from environment variables
    */
   private loadNetworksFromEnv() {
-    for (let i = 11; i <= 50; i++) {
+    for (let i = 1; i <= 10; i++) {
       const networkId = process.env[`RADMIN_NETWORK_${i}_ID`];
       const networkPassword = process.env[`RADMIN_NETWORK_${i}_PASSWORD`];
 

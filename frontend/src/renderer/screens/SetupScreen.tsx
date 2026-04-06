@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DependencyStatus } from "../../shared/types";
+import { useI18n } from "../config/i18n";
 
 interface SetupScreenProps {
   dependencies: DependencyStatus;
@@ -10,15 +11,16 @@ export default function SetupScreen({
   dependencies,
   onSetupComplete,
 }: SetupScreenProps) {
+  const { t, lang, changeLanguage } = useI18n();
   const [isInstalling, setIsInstalling] = useState(false);
   const [message, setMessage] = useState("");
 
   const handleInstallRadmin = async () => {
     setIsInstalling(true);
-    setMessage("Opening Radmin VPN download page...");
+    setMessage(t("start_app") + "...");
 
     try {
-      const result = await window.electronAPI.installRadminVpn();
+      const result = await (window as any).electronAPI.installRadminVpn();
       setMessage(result.message);
     } catch (error: any) {
       setMessage(`Error: ${error.message}`);
@@ -29,10 +31,10 @@ export default function SetupScreen({
 
   const handleSelectGamePath = async () => {
     try {
-      const result = await window.electronAPI.selectGamePath();
+      const result = await (window as any).electronAPI.selectGamePath();
 
       if (result.success) {
-        setMessage("Game path set successfully!");
+        setMessage(t("start_app") + "!");
         // Recheck dependencies
         setTimeout(() => {
           window.location.reload();
@@ -49,114 +51,170 @@ export default function SetupScreen({
     dependencies.radminVpn.installed && dependencies.aoeGame.installed;
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
-      <div className="max-w-2xl w-full mx-4">
-        <div className="bg-gray-800 rounded-lg shadow-2xl p-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            AOE Launcher Setup
-          </h1>
-          <p className="text-gray-400 mb-8">Let's get you ready to play!</p>
+    <div className="flex items-center justify-center min-h-screen bg-[#0a0a0c] relative overflow-hidden">
+      {/* Background Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full"></div>
 
-          {/* Radmin VPN */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold text-white">Radmin VPN</h3>
-              {dependencies.radminVpn.installed ? (
-                <span className="px-3 py-1 bg-green-600 text-white text-sm rounded-full">
-                  ✓ Installed
-                </span>
-              ) : (
-                <span className="px-3 py-1 bg-yellow-600 text-white text-sm rounded-full">
-                  Checking...
-                </span>
+      <div className="max-w-xl w-full mx-4 z-10">
+        <div className="bg-gray-900/40 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl p-10 overflow-hidden relative">
+          {/* Language Toggle */}
+          <div className="absolute top-6 right-6 flex bg-black/40 p-1 rounded-lg border border-white/5">
+            <button
+              onClick={() => changeLanguage("vi")}
+              className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                lang === "vi" ? "bg-blue-600 text-white shadow-lg" : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              VI
+            </button>
+            <button
+              onClick={() => changeLanguage("en")}
+              className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                lang === "en" ? "bg-blue-600 text-white shadow-lg" : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              EN
+            </button>
+          </div>
+
+          <header className="mb-10">
+            <h1 className="text-4xl font-black text-white mb-3 tracking-tight bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent">
+              {t("setup_title")}
+            </h1>
+            <p className="text-gray-400 font-medium">Ready to conquer the battlefield?</p>
+          </header>
+
+          <div className="space-y-8">
+            {/* Radmin VPN Section */}
+            <div className="group">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${dependencies.radminVpn.installed ? 'bg-green-500/10' : 'bg-yellow-500/10'}`}>
+                    <svg className={`w-5 h-5 ${dependencies.radminVpn.installed ? 'text-green-500' : 'text-yellow-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-white tracking-wide">Radmin VPN</h3>
+                </div>
+                {dependencies.radminVpn.installed ? (
+                  <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-green-500/20">
+                    Done
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 bg-yellow-500/10 text-yellow-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-yellow-500/20 animate-pulse">
+                    Required
+                  </span>
+                )}
+              </div>
+              
+              {!dependencies.radminVpn.installed && (
+                <div className="bg-blue-600/5 border border-blue-500/20 rounded-xl p-5 mb-4 group-hover:bg-blue-600/10 transition-all">
+                  <p className="text-sm text-blue-200/80 leading-relaxed mb-4">
+                    Radmin VPN helps you connect to other players. We'll try to install it automatically for you.
+                  </p>
+                  <button
+                    onClick={handleInstallRadmin}
+                    disabled={isInstalling}
+                    className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm font-bold transition-colors group-hover:translate-x-1 duration-300"
+                  >
+                    {isInstalling ? "Downloading..." : "Download & Install Manually →"}
+                  </button>
+                </div>
+              )}
+              {dependencies.radminVpn.path && (
+                <div className="bg-white/5 rounded-lg px-4 py-2 flex items-center gap-2">
+                  <span className="text-[10px] text-gray-500 font-mono truncate">{dependencies.radminVpn.path}</span>
+                </div>
               )}
             </div>
-            <p className="text-gray-400 text-sm mb-3">
-              {dependencies.radminVpn.installed
-                ? "Radmin VPN is installed and ready to use"
-                : "Installing automatically on first launch"}
-            </p>
-            {!dependencies.radminVpn.installed && (
-              <div className="bg-blue-900/30 border border-blue-700/50 rounded p-3 mb-2">
-                <p className="text-sm text-blue-200 mb-2">
-                  ℹ️ Radmin VPN is automatically installed when you first launch
-                  the app. If you see this message, please restart the
-                  application.
-                </p>
-                <button
-                  onClick={handleInstallRadmin}
-                  disabled={isInstalling}
-                  className="text-blue-400 hover:text-blue-300 text-sm underline disabled:text-gray-500"
-                >
-                  {isInstalling ? "Opening..." : "Or download manually"}
-                </button>
+
+            {/* Game Path Section */}
+            <div className="group">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${dependencies.aoeGame.installed ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                    <svg className={`w-5 h-5 ${dependencies.aoeGame.installed ? 'text-green-500' : 'text-red-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-white tracking-wide">AOE I (Empires.exe)</h3>
+                </div>
+                {dependencies.aoeGame.installed ? (
+                  <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-green-500/20">
+                    Found
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-red-500/20">
+                    Missing
+                  </span>
+                )}
+              </div>
+              
+              <div className="space-y-4">
+                <div className="relative">
+                  <button
+                    onClick={handleSelectGamePath}
+                    className="w-full flex items-center justify-between px-5 py-4 bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 hover:border-blue-500/50 rounded-xl text-gray-300 transition-all font-medium group/btn"
+                  >
+                    <span className="truncate mr-4 overflow-hidden text-ellipsis whitespace-nowrap">
+                      {dependencies.aoeGame.path || t("select_game_path")}
+                    </span>
+                    <span className="text-blue-500 font-bold text-xs shrink-0 group-hover/btn:translate-x-1 transition-transform">
+                      {t("browse")}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Region Selection */}
+            <div className="group">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 rounded-lg bg-purple-500/10">
+                  <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2 2 2 0 012 2v.5m.43 3.935A2 2 0 0118 20.312M11.732 3.469A2 2 0 0115 5.5l.044.22a2 2 0 001.294 1.515l3.227 1.076a2 2 0 011.163 2.187l-.43 3.935" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-white tracking-wide">Region</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                 <button className="flex items-center justify-center gap-2 px-5 py-4 bg-blue-600/20 border border-blue-500/50 rounded-xl text-white font-bold transition-all shadow-lg shadow-blue-900/10">
+                   <span className="text-lg">🇻🇳</span> Vietnam
+                 </button>
+                 <button className="flex items-center justify-center gap-2 px-5 py-4 bg-gray-800/30 border border-gray-700/50 rounded-xl text-gray-500 font-bold hover:bg-gray-800 hover:text-gray-300 transition-all">
+                   <span className="text-lg">🌎</span> Global
+                 </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Messages & Actions */}
+          <div className="mt-12">
+            {message && (
+              <div className="mb-6 animate-in slide-in-from-bottom-2 duration-300">
+                <div className="bg-blue-600/10 border border-blue-500/20 text-blue-300 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping"></div>
+                  {message}
+                </div>
               </div>
             )}
-            {dependencies.radminVpn.path && (
-              <p className="text-xs text-gray-500 mt-2">
-                Path: {dependencies.radminVpn.path}
-              </p>
-            )}
-          </div>
 
-          {/* AOE Game */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold text-white">
-                Age of Empires I
-              </h3>
-              {dependencies.aoeGame.installed ? (
-                <span className="px-3 py-1 bg-green-600 text-white text-sm rounded-full">
-                  ✓ Found
-                </span>
-              ) : (
-                <span className="px-3 py-1 bg-red-600 text-white text-sm rounded-full">
-                  Not Found
-                </span>
-              )}
-            </div>
-            <p className="text-gray-400 text-sm mb-3">
-              {dependencies.aoeGame.installed
-                ? "Game installation detected"
-                : "Could not auto-detect game installation"}
-            </p>
-            {!dependencies.aoeGame.installed && (
+            {canComplete ? (
               <button
-                onClick={handleSelectGamePath}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                onClick={onSetupComplete}
+                className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-xl shadow-blue-500/20 active:scale-[0.98] animate-in zoom-in-95 duration-500"
               >
-                Select Game Path
+                {t("start_app")}
               </button>
-            )}
-            {dependencies.aoeGame.path && (
-              <p className="text-xs text-gray-500 mt-2">
-                Path: {dependencies.aoeGame.path}
-              </p>
+            ) : (
+              <div className="bg-gray-900/60 p-4 rounded-xl text-center">
+                <p className="text-gray-500 text-[11px] font-bold uppercase tracking-widest leading-relaxed">
+                  Configuration required to access the launcher
+                </p>
+              </div>
             )}
           </div>
-
-          {/* Messages */}
-          {message && (
-            <div className="bg-blue-900/50 border border-blue-600 text-blue-200 px-4 py-3 rounded mb-6">
-              {message}
-            </div>
-          )}
-
-          {/* Complete Button */}
-          {canComplete && (
-            <button
-              onClick={onSetupComplete}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg"
-            >
-              Continue to Launcher
-            </button>
-          )}
-
-          {!canComplete && (
-            <div className="text-center text-gray-500 text-sm">
-              Please install all required dependencies to continue
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { useRooms } from "../hooks/useRooms";
 import { useAuth } from "../hooks/useAuth";
+import { useI18n } from "../config/i18n";
 import RoomCard from "../components/RoomCard";
 import CreateRoomModal from "../components/CreateRoomModal";
 import JoinRoomModal from "../components/JoinRoomModal";
+import UserAvatar from "../components/shared/UserAvatar";
 
 export default function RoomListView() {
   const { user, logout } = useAuth();
+  const { t, lang, changeLanguage } = useI18n();
   const { rooms, startPolling, stopPolling, joinRoom, createRoom } = useRooms();
 
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
@@ -22,13 +25,11 @@ export default function RoomListView() {
     const room = rooms.find((r) => r.id === roomId);
     if (!room) return;
 
-    // If room has password, show password modal
     if (room.hasPassword) {
       setJoinRoomId(roomId);
       return;
     }
 
-    // Join directly
     setIsJoining(true);
     try {
       await joinRoom(roomId);
@@ -42,80 +43,150 @@ export default function RoomListView() {
   const handleJoinWithPassword = async (password: string) => {
     if (!joinRoomId) return;
 
-    await joinRoom(joinRoomId, password);
-    setJoinRoomId(null);
+    try {
+      await joinRoom(joinRoomId, password);
+      setJoinRoomId(null);
+    } catch (error: any) {
+      alert(error.response?.data?.error || "Invalid password");
+    }
   };
 
-  const handleCreateRoom = async (name: string, password?: string) => {
-    await createRoom(name, password);
+  const handleCreateRoom = async (
+    name: string,
+    radminId: string,
+    radminPass: string,
+    password?: string
+  ) => {
+    await createRoom(name, radminId, radminPass, password);
+    setIsCreatingRoom(false);
   };
 
   const defaultRooms = rooms.filter((r) => r.type === "default");
   const customRooms = rooms.filter((r) => r.type === "custom");
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900">
-      {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white">AOE Launcher</h1>
-            <p className="text-sm text-gray-400">Welcome, {user?.username}!</p>
+    <div className="flex flex-col h-screen bg-[#0a0a0c] text-white">
+      {/* Premium Header */}
+      <div className="bg-gray-900/50 backdrop-blur-md border-b border-white/5 p-4 sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-2 bg-blue-600 rounded-lg shadow-lg shadow-blue-600/20">
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-xl font-black tracking-tight bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent">
+                AOE LAUNCHER
+              </h1>
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{t("waiting")}...</p>
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsCreatingRoom(true)}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-medium"
-            >
-              + Create Room
-            </button>
-            <button
-              onClick={logout}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
-            >
-              Logout
-            </button>
+
+          <div className="flex items-center gap-6">
+            {/* Language Toggle */}
+            <div className="hidden md:flex bg-black/40 p-1 rounded-lg border border-white/5">
+              <button
+                onClick={() => changeLanguage("vi")}
+                className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${
+                  lang === "vi" ? "bg-blue-600 text-white shadow-lg" : "text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                VI
+              </button>
+              <button
+                onClick={() => changeLanguage("en")}
+                className={`px-3 py-1 text-[10px] font-black rounded-md transition-all ${
+                  lang === "en" ? "bg-blue-600 text-white shadow-lg" : "text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                EN
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 pl-6 border-l border-white/5">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold text-white leading-none">{user?.username}</p>
+                <button onClick={logout} className="text-[10px] text-red-500 hover:text-red-400 font-black uppercase tracking-widest transition-colors mt-1">
+                  {t("logout")}
+                </button>
+              </div>
+              <UserAvatar username={user?.username || "Guest"} size={10} className="border-2 border-white/5" />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Room List */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {/* Default Rooms */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-white mb-4">Public Rooms</h2>
-          {defaultRooms.length === 0 ? (
-            <p className="text-gray-500">No public rooms available</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {defaultRooms.map((room) => (
-                <RoomCard
-                  key={room.id}
-                  room={room}
-                  onJoin={handleJoinRoom}
-                  isJoining={isJoining}
-                />
-              ))}
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="max-w-7xl mx-auto p-6 md:p-8">
+          
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+            <div>
+              <h2 className="text-3xl font-black tracking-tight mb-2">{t("rooms_title")}</h2>
+              <p className="text-gray-500 text-sm font-medium">Join a battlefield and prove your skills.</p>
             </div>
-          )}
-        </div>
-
-        {/* Custom Rooms */}
-        {customRooms.length > 0 && (
-          <div>
-            <h2 className="text-xl font-bold text-white mb-4">Custom Rooms</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {customRooms.map((room) => (
-                <RoomCard
-                  key={room.id}
-                  room={room}
-                  onJoin={handleJoinRoom}
-                  isJoining={isJoining}
-                />
-              ))}
-            </div>
+            <button
+              onClick={() => setIsCreatingRoom(true)}
+              className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest text-sm shadow-xl shadow-blue-900/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <span className="text-xl">+</span> {t("create_room")}
+            </button>
           </div>
-        )}
+
+          <div className="space-y-12">
+            {/* Default Rooms */}
+            <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="w-1.5 h-6 bg-indigo-500 rounded-full"></span>
+                <h3 className="text-lg font-black uppercase tracking-widest text-gray-400">{t("default_room")}</h3>
+              </div>
+              {defaultRooms.length === 0 ? (
+                <div className="bg-white/5 border border-dashed border-white/10 rounded-2xl p-12 text-center">
+                  <p className="text-gray-600 font-medium">No public rooms available at the moment.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {defaultRooms.map((room) => (
+                    <RoomCard
+                      key={room.id}
+                      room={room}
+                      onJoin={handleJoinRoom}
+                      isJoining={isJoining}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Custom Rooms */}
+            <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
+                <h3 className="text-lg font-black uppercase tracking-widest text-gray-400">{t("custom_room")}</h3>
+              </div>
+              {customRooms.length === 0 ? (
+                <div className="bg-white/5 border border-dashed border-white/10 rounded-2xl p-12 text-center group hover:bg-white/10 transition-all cursor-pointer" onClick={() => setIsCreatingRoom(true)}>
+                  <p className="text-gray-600 font-medium group-hover:text-gray-400 transition-colors">Be the first to host a custom match!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {customRooms.map((room) => (
+                    <RoomCard
+                      key={room.id}
+                      room={room}
+                      onJoin={handleJoinRoom}
+                      isJoining={isJoining}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        </div>
       </div>
 
       {/* Modals */}

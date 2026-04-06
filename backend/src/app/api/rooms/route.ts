@@ -4,7 +4,6 @@ import connectDB from '@/lib/mongodb';
 import Room from '@/lib/models/Room';
 import { getUserFromToken } from '@/lib/auth';
 import { validateBody, CreateRoomSchema } from '@/lib/validation';
-import { getNetworkPool } from '@/lib/services/RadminNetworkPool';
  
 /**
  * GET /api/rooms
@@ -80,20 +79,9 @@ export async function POST(request: NextRequest) {
       );
     }
    
-    const { name, password, maxPlayers } = validation.data;
+    const { name, password, maxPlayers, radminNetworkId, radminNetworkPassword } = validation.data;
    
     await connectDB();
-   
-    // Allocate a network from the pool
-    const networkPool = getNetworkPool();
-    const network = await networkPool.allocate();
-   
-    if (!network) {
-      return NextResponse.json(
-        { error: 'No available networks. Maximum custom rooms reached.' },
-        { status: 503 }
-      );
-    }
    
     try {
       // Hash password if provided
@@ -107,11 +95,12 @@ export async function POST(request: NextRequest) {
         name,
         password: hashedPassword,
         maxPlayers: maxPlayers || 8,
-        radminNetworkId: network.id,
-        radminNetworkPassword: network.password,
+        radminNetworkId: radminNetworkId,
+        radminNetworkPassword: radminNetworkPassword,
         ownerId: tokenPayload.userId,
         players: [],
         lastActivity: new Date(),
+        lastHeartbeat: new Date(),
       });
      
       return NextResponse.json(
@@ -133,8 +122,6 @@ export async function POST(request: NextRequest) {
         { status: 201 }
       );
     } catch (error) {
-      // Release network if room creation fails
-      networkPool.release(network.id);
       throw error;
     }
   } catch (error) {

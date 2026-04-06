@@ -8,8 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "tsx src/scripts/seed-rooms.ts",
-    "cleanup": "tsx src/scripts/cleanup-rooms.ts"
+    "seed": "tsx --env-file=.env src/scripts/seed-rooms.ts",
+    "cleanup": "tsx --env-file=.env src/scripts/cleanup-rooms.ts"
   },
   "dependencies": {
     "next": "^15.0.0",

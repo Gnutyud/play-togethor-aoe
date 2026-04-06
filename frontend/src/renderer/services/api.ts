@@ -137,12 +137,23 @@ class ApiService {
     return response.data.rooms;
   }
 
-  async createRoom(name: string, password?: string): Promise<Room> {
+  async createRoom(
+    name: string,
+    radminNetworkId: string,
+    radminNetworkPassword: string,
+    password?: string
+  ): Promise<Room> {
     const response = await this.client.post<{ room: Room }>("/api/rooms", {
       name,
       password,
+      radminNetworkId,
+      radminNetworkPassword,
     });
     return response.data.room;
+  }
+
+  getRoomsEventSourceUrl(): string {
+    return `${API_BASE_URL}/api/rooms/events`;
   }
 
   async joinRoom(roomId: string, password?: string): Promise<RoomWithNetwork> {
