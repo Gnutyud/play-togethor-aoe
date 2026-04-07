@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useStore } from "../store/useStore";
 
 // Translation dictionary
 const translations = {
@@ -135,7 +136,7 @@ const translations = {
 export type Language = "vi" | "en";
 
 export function useI18n() {
-  const [lang, setLang] = useState<Language>("vi");
+  const { lang, setLang } = useStore();
 
   useEffect(() => {
     // Load preference from electron-store via preload
@@ -143,7 +144,7 @@ export function useI18n() {
     if (savedLang && translations[savedLang]) {
       setLang(savedLang);
     }
-  }, []);
+  }, [setLang]);
 
   const t = (key: keyof typeof translations.vi) => {
     return translations[lang][key] || translations.en[key] || key;

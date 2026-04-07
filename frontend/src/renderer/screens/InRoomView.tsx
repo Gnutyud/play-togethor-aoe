@@ -15,18 +15,6 @@ export default function InRoomView() {
   const [isLaunchingGame, setIsLaunchingGame] = useState(false);
   const [gamePath, setGamePath] = useState("");
 
-  useEffect(() => {
-    const loadGamePath = async () => {
-      try {
-        const path = await (window as any).electronAPI.getSettings("gamePath");
-        setGamePath(path || "");
-      } catch (error) {
-        console.error("Failed to load game path:", error);
-      }
-    };
-    loadGamePath();
-  }, []);
-
   if (!currentRoom) return null;
 
   const handleConnectVpn = async () => {
@@ -46,10 +34,11 @@ export default function InRoomView() {
           password: currentRoom.radminNetworkPassword,
         });
       } else {
-        alert(t("how_it_works") + ": " + result.message);
+        // Only alert if manual click failed, but here we keep it simple
+        console.error("VPN Auto-connect failed:", result.message);
       }
     } catch (error: any) {
-      alert("VPN Error: " + error.message);
+      console.error("VPN Error:", error.message);
     } finally {
       setIsConnectingVpn(false);
     }
@@ -63,6 +52,24 @@ export default function InRoomView() {
       alert(error.message);
     }
   };
+
+  useEffect(() => {
+    const loadGamePath = async () => {
+      try {
+        const path = await (window as any).electronAPI.getSettings("gamePath");
+        setGamePath(path || "");
+      } catch (error) {
+        console.error("Failed to load game path:", error);
+      }
+    };
+    
+    loadGamePath();
+
+    // Auto-connect VPN if not already connected
+    if (currentRoom && !vpnConnection?.connected && !isConnectingVpn) {
+      handleConnectVpn();
+    }
+  }, [currentRoom?.id, vpnConnection?.connected]);
 
   const handleLaunchGame = async () => {
     if (!gamePath) {
@@ -145,7 +152,7 @@ export default function InRoomView() {
                   <h3 className="text-lg font-black uppercase tracking-widest text-gray-400">Radmin VPN</h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 hidden">
                   <div className="bg-black/20 border border-white/5 rounded-xl p-4">
                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t("radmin_id")}</p>
                     <p className="font-mono text-sm text-blue-400 select-all">{currentRoom.radminNetworkId}</p>
@@ -160,7 +167,7 @@ export default function InRoomView() {
                   <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500">
                     <div className="flex items-center gap-3 px-6 py-4 bg-green-500/10 border border-green-500/20 rounded-xl">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
-                      <span className="text-sm font-bold text-green-400 uppercase tracking-wide">✓ Connected to Host Network</span>
+                      <span className="text-sm font-bold text-green-400 uppercase tracking-wide">✓ {t("waiting")}... (Connected to Host Network)</span>
                     </div>
                     <button
                       onClick={handleDisconnectVpn}

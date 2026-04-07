@@ -130,7 +130,7 @@ export default function RoomListView() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
             <div>
               <h2 className="text-3xl font-black tracking-tight mb-2">{t("rooms_title")}</h2>
-              <p className="text-gray-500 text-sm font-medium">Join a battlefield and prove your skills.</p>
+              <p className="text-gray-500 text-sm font-medium">{t("be_first_host")}</p>
             </div>
             <button
               onClick={() => setIsCreatingRoom(true)}
@@ -149,7 +149,7 @@ export default function RoomListView() {
               </div>
               {defaultRooms.length === 0 ? (
                 <div className="bg-white/5 border border-dashed border-white/10 rounded-2xl p-12 text-center">
-                  <p className="text-gray-600 font-medium">No public rooms available at the moment.</p>
+                  <p className="text-gray-600 font-medium">{t("no_public_rooms")}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -173,7 +173,7 @@ export default function RoomListView() {
               </div>
               {customRooms.length === 0 ? (
                 <div className="bg-white/5 border border-dashed border-white/10 rounded-2xl p-12 text-center group hover:bg-white/10 transition-all cursor-pointer" onClick={() => setIsCreatingRoom(true)}>
-                  <p className="text-gray-600 font-medium group-hover:text-gray-400 transition-colors">Be the first to host a custom match!</p>
+                  <p className="text-gray-600 font-medium group-hover:text-gray-400 transition-colors">{t("be_first_host")}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
