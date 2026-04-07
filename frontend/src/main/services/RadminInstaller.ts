@@ -59,11 +59,12 @@ export class RadminInstaller {
    * Checks common installation paths
    */
   async isInstalled(): Promise<boolean> {
+    if (process.platform !== "win32") return true;
     logger.info("Checking if Radmin VPN is already installed");
 
     const commonPaths = [
-      "C:\\Program Files (x86)\\Radmin VPN\\Radmin.exe",
-      "C:\\Program Files\\Radmin VPN\\Radmin.exe",
+      "C:\\Program Files (x86)\\Radmin VPN\\RvpnGui.exe",
+      "C:\\Program Files\\Radmin VPN\\RvpnGui.exe",
     ];
 
     for (const exePath of commonPaths) {

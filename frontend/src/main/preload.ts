@@ -28,20 +28,26 @@ contextBridge.exposeInMainWorld("electronAPI", {
   selectGamePath: (): Promise<{ success: boolean; path?: string }> =>
     ipcRenderer.invoke(IPC_CHANNELS.GAME_SELECT_PATH),
 
-  launchGame: (
+  async launch(
     config: GameConfig
-  ): Promise<{ success: boolean; error?: string }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.GAME_LAUNCH, config),
+  ): Promise<{ success: boolean; message: string }> {
+    if (process.platform !== "win32") {
+      return {
+        success: false,
+        message: "AOE I game is currently only supported on Windows.",
+      };
+    }
+    return ipcRenderer.invoke(IPC_CHANNELS.GAME_LAUNCH, config);
+  },
 
   // Radmin VPN Management
   checkVpnStatus: (): Promise<RadminVpnConnection> =>
     ipcRenderer.invoke(IPC_CHANNELS.VPN_CHECK_STATUS),
 
   connectVpn: (
-    networkId: string,
-    password: string
+    connection: any
   ): Promise<{ success: boolean; error?: string }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.VPN_CONNECT, networkId, password),
+    ipcRenderer.invoke(IPC_CHANNELS.VPN_CONNECT, connection),
 
   disconnectVpn: (): Promise<{ success: boolean }> =>
     ipcRenderer.invoke(IPC_CHANNELS.VPN_DISCONNECT),
@@ -78,8 +84,7 @@ declare global {
       ) => Promise<{ success: boolean; error?: string }>;
       checkVpnStatus: () => Promise<RadminVpnConnection>;
       connectVpn: (
-        networkId: string,
-        password: string
+        connection: any
       ) => Promise<{ success: boolean; error?: string }>;
       disconnectVpn: () => Promise<{ success: boolean }>;
       getSettings: <T = any>(key: string) => Promise<T>;

@@ -25,7 +25,7 @@ export const APP_CONFIG = {
 
   // Radmin VPN
   RADMIN_VPN_DOWNLOAD_URL: "https://www.radmin-vpn.com/",
-  RADMIN_VPN_EXE_NAME: "Radmin.exe",
+  RADMIN_VPN_EXE_NAME: "RvpnGui.exe",
 
   // Common Radmin VPN installation paths
   RADMIN_VPN_PATHS: [

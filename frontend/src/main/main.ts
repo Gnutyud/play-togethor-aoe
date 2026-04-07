@@ -4,6 +4,7 @@ import { setupIpcHandlers } from "./ipc/handlers";
 import { initializeLogger } from "./utils/logger";
 import { radminInstaller } from "./services/RadminInstaller";
 import { DependencyManager } from "./services/DependencyManager";
+import { APP_CONFIG } from "./config/constants";
 import {
   createSplashWindow,
   closeSplashWindow,
@@ -67,8 +68,22 @@ const createWindow = () => {
 
     if (!loaded) {
       logger.error("COULD NOT FIND index.html in any known location!");
+      // Optionally show a dialog
+      dialog.showErrorBox(
+        "Loading Error",
+        "The application UI could not be loaded. Please check the logs."
+      );
     }
   }
+
+  // Setup diagnostic events
+  mainWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL) => {
+    logger.error(`UI failed to load: ${errorDescription} (${errorCode}) at ${validatedURL}`);
+  });
+
+  mainWindow.on("unresponsive", () => {
+    logger.warn("Main window became unresponsive");
+  });
 
   // Setup IPC handlers
   if (mainWindow) {
@@ -184,7 +199,7 @@ app.whenReady().then(async () => {
   logger.info("Application ready, checking dependencies");
 
   // Check and install Radmin VPN if needed
-  const radminReady = await checkAndInstallRadmin();
+  const radminReady = process.platform === "win32" ? await checkAndInstallRadmin() : true;
 
   if (!radminReady) {
     logger.error(
@@ -202,14 +217,16 @@ app.whenReady().then(async () => {
   createWindow();
 
   // Monitor Radmin VPN status
-  setInterval(async () => {
-    if (mainWindow) {
-      const isRunning = await dependencyManager.isProcessRunning("Radmin VPN.exe");
-      if (!isRunning) {
-        mainWindow.webContents.send("radmin-status-changed", { running: false });
+  if (process.platform === "win32") {
+    setInterval(async () => {
+      if (mainWindow) {
+        const isRunning = await dependencyManager.isProcessRunning(APP_CONFIG.RADMIN_VPN_EXE_NAME);
+        if (!isRunning) {
+          mainWindow.webContents.send("radmin-status-changed", { running: false });
+        }
       }
-    }
-  }, 10000);
+    }, 10000);
+  }
 
   app.on("activate", () => {
     // On macOS it's common to re-create a window in the app when the

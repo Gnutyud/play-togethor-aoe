@@ -29,6 +29,14 @@ export class DependencyManager {
     const radminStatus = await this.checkRadminVpn();
     const gameStatus = await this.checkAoeGame();
 
+    // If not windows, return successful check for development/testing on mac/linux
+    if (process.platform !== 'win32') {
+      return {
+        radminVpn: { installed: true, path: "/mock/radmin", version: "mock" },
+        aoeGame: { installed: true, path: "/mock/aoe", version: "mock" },
+      };
+    }
+
     return {
       radminVpn: radminStatus,
       aoeGame: gameStatus,
@@ -43,6 +51,7 @@ export class DependencyManager {
     path?: string;
     version?: string;
   }> {
+    if (process.platform !== 'win32') return { installed: true };
     logger.info("Checking Radmin VPN installation");
 
     // Check if we have a saved path
@@ -173,6 +182,7 @@ export class DependencyManager {
    * Check if a process is currently running
    */
   async isProcessRunning(exeName: string): Promise<boolean> {
+    if (process.platform !== 'win32') return true;
     try {
       const { stdout } = await execAsync(`tasklist /FI "IMAGENAME eq ${exeName}" /NH`);
       return stdout.toLowerCase().includes(exeName.toLowerCase());
@@ -185,6 +195,7 @@ export class DependencyManager {
    * Ensure Radmin VPN is running, start if not
    */
   async ensureRadminRunning(): Promise<boolean> {
+    if (process.platform !== 'win32') return true;
     const isRunning = await this.isProcessRunning(APP_CONFIG.RADMIN_VPN_EXE_NAME);
     if (isRunning) return true;
 
