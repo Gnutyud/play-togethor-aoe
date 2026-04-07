@@ -170,6 +170,39 @@ export class DependencyManager {
   }
 
   /**
+   * Check if a process is currently running
+   */
+  async isProcessRunning(exeName: string): Promise<boolean> {
+    try {
+      const { stdout } = await execAsync(`tasklist /FI "IMAGENAME eq ${exeName}" /NH`);
+      return stdout.toLowerCase().includes(exeName.toLowerCase());
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Ensure Radmin VPN is running, start if not
+   */
+  async ensureRadminRunning(): Promise<boolean> {
+    const isRunning = await this.isProcessRunning(APP_CONFIG.RADMIN_VPN_EXE_NAME);
+    if (isRunning) return true;
+
+    const radmin = await this.checkRadminVpn();
+    if (radmin.installed && radmin.path) {
+      logger.info("Radmin VPN not running, attempting to start...");
+      try {
+        await execAsync(`start "" "${radmin.path}"`);
+        return true;
+      } catch (error) {
+        logger.error("Failed to start Radmin VPN", error);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Check if file exists and is accessible
    */
   private fileExists(filePath: string): boolean {

@@ -36,6 +36,8 @@ interface AppState {
   setLastUpdate: (timestamp: string) => void;
   lang: Language;
   setLang: (lang: Language) => void;
+  isRoomsLoading: boolean;
+  setIsRoomsLoading: (loading: boolean) => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -71,4 +73,6 @@ export const useStore = create<AppState>((set) => ({
   setLastUpdate: (timestamp) => set({ lastUpdate: timestamp }),
   lang: "vi",
   setLang: (lang) => set({ lang }),
+  isRoomsLoading: true,
+  setIsRoomsLoading: (loading) => set({ isRoomsLoading: loading }),
 }));

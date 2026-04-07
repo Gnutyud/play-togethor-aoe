@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useI18n } from "../config/i18n";
+import { useAuth } from "../hooks/useAuth";
 
 interface CreateRoomModalProps {
   isOpen: boolean;
@@ -8,7 +9,8 @@ interface CreateRoomModalProps {
     name: string,
     radminId: string,
     radminPass: string,
-    password?: string
+    password?: string,
+    type?: string
   ) => Promise<void>;
 }
 
@@ -18,9 +20,11 @@ export default function CreateRoomModal({
   onCreate,
 }: CreateRoomModalProps) {
   const { t } = useI18n();
+  const { user } = useAuth();
   const [roomName, setRoomName] = useState("");
   const [radminId, setRadminId] = useState("");
   const [radminPass, setRadminPass] = useState("");
+  const [roomType, setRoomType] = useState<"custom" | "default">("custom");
   const [password, setPassword] = useState("");
   const [usePassword, setUsePassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,7 +58,8 @@ export default function CreateRoomModal({
         roomName,
         radminId,
         radminPass,
-        usePassword ? password : undefined
+        usePassword ? password : undefined,
+        user?.role === "admin" ? roomType : undefined
       );
 
       // Reset form and close
@@ -63,6 +68,7 @@ export default function CreateRoomModal({
       setRadminPass("");
       setPassword("");
       setUsePassword(false);
+      setRoomType("custom");
       onClose();
     } catch (err: any) {
       setError(
@@ -109,6 +115,38 @@ export default function CreateRoomModal({
               maxLength={50}
             />
           </div>
+
+          {user?.role === "admin" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                {t("room_type")}
+              </label>
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => setRoomType("custom")}
+                  className={`flex-1 py-2 rounded-lg border text-xs font-bold transition-all ${
+                    roomType === "custom"
+                      ? "bg-indigo-600 border-indigo-500 text-white"
+                      : "bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700"
+                  }`}
+                >
+                  {t("custom_type")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRoomType("default")}
+                  className={`flex-1 py-2 rounded-lg border text-xs font-bold transition-all ${
+                    roomType === "default"
+                      ? "bg-blue-600 border-blue-500 text-white"
+                      : "bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700"
+                  }`}
+                >
+                  {t("default_type")}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>

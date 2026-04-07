@@ -46,15 +46,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate tokens
-    const accessToken = generateAccessToken({
+    const tokenPayload = {
       userId: user._id.toString(),
       username: user.username,
-    });
+      role: user.role,
+    };
 
-    const refreshToken = generateRefreshToken({
-      userId: user._id.toString(),
-      username: user.username,
-    });
+    const accessToken = generateAccessToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
 
     // Return success response
     return NextResponse.json(
@@ -63,6 +62,7 @@ export async function POST(request: NextRequest) {
         user: {
           id: user._id.toString(),
           username: user.username,
+          role: user.role,
           currentRoomId: user.currentRoomId,
         },
         accessToken,

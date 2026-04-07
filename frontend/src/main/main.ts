@@ -3,6 +3,7 @@ import path from "path";
 import { setupIpcHandlers } from "./ipc/handlers";
 import { initializeLogger } from "./utils/logger";
 import { radminInstaller } from "./services/RadminInstaller";
+import { DependencyManager } from "./services/DependencyManager";
 import {
   createSplashWindow,
   closeSplashWindow,
@@ -193,8 +194,22 @@ app.whenReady().then(async () => {
     return;
   }
 
+  // Ensure Radmin VPN is running
+  const dependencyManager = new DependencyManager();
+  await dependencyManager.ensureRadminRunning();
+
   // Create main window after Radmin check
   createWindow();
+
+  // Monitor Radmin VPN status
+  setInterval(async () => {
+    if (mainWindow) {
+      const isRunning = await dependencyManager.isProcessRunning("Radmin VPN.exe");
+      if (!isRunning) {
+        mainWindow.webContents.send("radmin-status-changed", { running: false });
+      }
+    }
+  }, 10000);
 
   app.on("activate", () => {
     // On macOS it's common to re-create a window in the app when the

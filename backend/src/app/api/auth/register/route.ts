@@ -46,15 +46,14 @@ export async function POST(request: NextRequest) {
     });
 
     // Generate tokens
-    const accessToken = generateAccessToken({
-      userId: user._id.toString(),
-      username: user.username,
-    });
+    const tokenPayload: any = {
+        userId: user._id.toString(),
+        username: user.username,
+        role: user.role,
+      };
 
-    const refreshToken = generateRefreshToken({
-      userId: user._id.toString(),
-      username: user.username,
-    });
+      const accessToken = generateAccessToken(tokenPayload);
+      const refreshToken = generateRefreshToken(tokenPayload);
 
     // Return success response
     return NextResponse.json(

@@ -89,9 +89,11 @@ export async function POST(request: NextRequest) {
         ? await bcrypt.hash(password, 10)
         : undefined;
      
-      // Create custom room
+      // Create room (allow admin to set type)
+      const roomType = (tokenPayload.role === 'admin' && body.type) ? body.type : 'custom';
+      
       const room = await Room.create({
-        type: 'custom',
+        type: roomType,
         name,
         password: hashedPassword,
         maxPlayers: maxPlayers || 8,

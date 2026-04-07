@@ -141,13 +141,15 @@ class ApiService {
     name: string,
     radminNetworkId: string,
     radminNetworkPassword: string,
-    password?: string
+    password?: string,
+    type?: string
   ): Promise<Room> {
     const response = await this.client.post<{ room: Room }>("/api/rooms", {
       name,
       password,
       radminNetworkId,
       radminNetworkPassword,
+      type,
     });
     return response.data.room;
   }
@@ -174,6 +176,33 @@ class ApiService {
 
   async deleteRoom(roomId: string): Promise<void> {
     await this.client.delete(`/api/rooms/${roomId}`);
+  }
+
+  async updateRoom(
+    roomId: string,
+    updates: {
+      name?: string;
+      radminNetworkId?: string;
+      radminNetworkPassword?: string;
+      maxPlayers?: number;
+      type?: string;
+    }
+  ): Promise<Room> {
+    const response = await this.client.patch<{ room: Room }>(
+      `/api/rooms/${roomId}`,
+      updates
+    );
+    return response.data.room;
+  }
+
+  async changePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
+    await this.client.post("/api/auth/password", {
+      currentPassword,
+      newPassword,
+    });
   }
 
   async getRoomUpdates(since?: string): Promise<Room[]> {

@@ -8,6 +8,7 @@ const JWT_REFRESH_SECRET =
 export interface TokenPayload {
   userId: string;
   username: string;
+  role: "user" | "admin";
 }
 
 export interface DecodedToken extends TokenPayload {
@@ -81,6 +82,6 @@ export async function getUserFromToken(
 
   const decoded = verifyAccessToken(token);
   return decoded
-    ? { userId: decoded.userId, username: decoded.username }
+    ? { userId: decoded.userId, username: decoded.username, role: decoded.role }
     : null;
 }

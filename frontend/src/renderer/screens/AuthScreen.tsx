@@ -146,19 +146,26 @@ export default function AuthScreen() {
             </button>
           </form>
 
-          <div className="mt-8 text-center">
-            <button
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError("");
-                setConfirmPassword("");
-              }}
-              className="text-gray-400 hover:text-white text-xs font-bold transition-colors"
-              disabled={loading}
-            >
-              {isLogin ? t("no_account") : t("have_account")}
-            </button>
-          </div>
+              <div className="mt-6 text-center space-y-4">
+                <p className="text-gray-500 text-sm">
+                  {isLogin ? t("no_account") : t("have_account")}{" "}
+                  <button
+                    onClick={() => {
+                      setIsLogin(!isLogin);
+                      setError("");
+                      setConfirmPassword("");
+                    }}
+                    className="text-indigo-400 hover:text-indigo-300 font-bold transition-colors"
+                  >
+                    {isLogin ? t("register") : t("login")}
+                  </button>
+                </p>
+                <div className="pt-2 border-t border-white/5">
+                  <p className="text-[10px] text-gray-600 font-medium leading-relaxed italic">
+                    {t("forgot_password_contact")}
+                  </p>
+                </div>
+              </div>
         </div>
       </div>
     </div>

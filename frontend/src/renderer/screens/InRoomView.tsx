@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useStore } from "../store/useStore";
 import { useI18n } from "../config/i18n";
 import UserAvatar from "../components/shared/UserAvatar";
+import { api } from "../services/api";
 
 export default function InRoomView() {
   const { t } = useI18n();
@@ -13,7 +14,12 @@ export default function InRoomView() {
 
   const [isConnectingVpn, setIsConnectingVpn] = useState(false);
   const [isLaunchingGame, setIsLaunchingGame] = useState(false);
+  const [isLeavingRoom, setIsLeavingRoom] = useState(false);
   const [gamePath, setGamePath] = useState("");
+  const [isEditingRadmin, setIsEditingRadmin] = useState(false);
+  const [editRadminId, setEditRadminId] = useState("");
+  const [editRadminPass, setEditRadminPass] = useState("");
+  const [isUpdatingRadmin, setIsUpdatingRadmin] = useState(false);
 
   if (!currentRoom) return null;
 
@@ -97,6 +103,7 @@ export default function InRoomView() {
   };
 
   const handleLeaveRoom = async () => {
+    setIsLeavingRoom(true);
     try {
       if (vpnConnection?.connected) {
         await handleDisconnectVpn();
@@ -104,10 +111,31 @@ export default function InRoomView() {
       await leaveRoom();
     } catch (error: any) {
       alert(error.message);
+    } finally {
+      setIsLeavingRoom(false);
+    }
+  };
+
+  const handleUpdateRadmin = async () => {
+    if (!currentRoom) return;
+    setIsUpdatingRadmin(true);
+    try {
+      await api.updateRoom(currentRoom.id, {
+        radminNetworkId: editRadminId,
+        radminNetworkPassword: editRadminPass,
+      });
+      setIsEditingRadmin(false);
+      // Room will be updated via SSE or polling
+    } catch (error: any) {
+      alert(error.response?.data?.error || "Failed to update room");
+    } finally {
+      setIsUpdatingRadmin(false);
     }
   };
 
   const isOwner = user?.id === currentRoom.ownerId;
+  const isAdmin = user?.role === "admin";
+  const canManage = isOwner || isAdmin;
 
   return (
     <div className="flex flex-col h-screen bg-[#0a0a0c] text-white overflow-hidden">
@@ -129,9 +157,10 @@ export default function InRoomView() {
           </div>
           <button
             onClick={handleLeaveRoom}
-            className="px-6 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-black uppercase tracking-widest rounded-lg border border-red-500/20 transition-all"
+            disabled={isLeavingRoom}
+            className="px-6 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-black uppercase tracking-widest rounded-lg border border-red-500/20 transition-all disabled:opacity-50"
           >
-            {t("leave")}
+            {isLeavingRoom ? "..." : t("leave")}
           </button>
         </div>
       </div>
@@ -152,10 +181,22 @@ export default function InRoomView() {
                   <h3 className="text-lg font-black uppercase tracking-widest text-gray-400">Radmin VPN</h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 hidden">
-                  <div className="bg-black/20 border border-white/5 rounded-xl p-4">
+                <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 ${(isOwner || isAdmin) ? "" : "hidden"}`}>
+                  <div className="bg-black/20 border border-white/5 rounded-xl p-4 relative group/item">
                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t("radmin_id")}</p>
                     <p className="font-mono text-sm text-blue-400 select-all">{currentRoom.radminNetworkId}</p>
+                    {isAdmin && (
+                      <button 
+                        onClick={() => {
+                          setEditRadminId(currentRoom.radminNetworkId);
+                          setEditRadminPass(currentRoom.radminNetworkPassword);
+                          setIsEditingRadmin(true);
+                        }}
+                        className="absolute top-2 right-2 p-1 bg-white/5 hover:bg-white/10 rounded opacity-0 group-hover/item:opacity-100 transition-opacity"
+                      >
+                        <span className="text-[8px] font-black uppercase tracking-widest">{t("edit")}</span>
+                      </button>
+                    )}
                   </div>
                   <div className="bg-black/20 border border-white/5 rounded-xl p-4">
                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t("radmin_pass")}</p>
@@ -262,16 +303,59 @@ export default function InRoomView() {
                 </div>
               </div>
 
-              {isOwner && (
+              {canManage && (
                 <div className="bg-blue-600/5 border border-blue-500/20 rounded-2xl p-6">
                   <p className="text-xs text-blue-300/80 leading-relaxed font-bold italic">
-                    * Admin: Room will close automatically when the last player leaves.
+                    {t("admin_notice")}
                   </p>
                 </div>
               )}
             </div>
           </div>
+          {/* Admin Edit Modal */}
+      {isEditingRadmin && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#121214] border border-white/10 rounded-2xl w-full max-w-md p-8 shadow-2xl">
+            <h3 className="text-xl font-black mb-6 uppercase tracking-wider">Edit Radmin Info</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">Network ID</label>
+                <input
+                  type="text"
+                  value={editRadminId}
+                  onChange={(e) => setEditRadminId(e.target.value)}
+                  className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">Network Password</label>
+                <input
+                  type="text"
+                  value={editRadminPass}
+                  onChange={(e) => setEditRadminPass(e.target.value)}
+                  className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+              <div className="flex gap-4 mt-8">
+                <button
+                  onClick={() => setIsEditingRadmin(false)}
+                  className="flex-1 py-3 text-xs font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors"
+                >
+                  {t("cancel")}
+                </button>
+                <button
+                  onClick={handleUpdateRadmin}
+                  disabled={isUpdatingRadmin}
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg transition-all"
+                >
+                  {isUpdatingRadmin ? "..." : t("save_settings")}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
+      )}
+    </div>
       </div>
     </div>
   );

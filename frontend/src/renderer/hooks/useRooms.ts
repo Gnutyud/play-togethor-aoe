@@ -13,6 +13,7 @@ export function useRooms() {
     setIsPolling,
     lastUpdate,
     setLastUpdate,
+    setIsRoomsLoading,
   } = useStore();
 
   const sseRef = useRef<EventSource | null>(null);
@@ -26,8 +27,10 @@ export function useRooms() {
       const fetchedRooms = await api.getRooms();
       setRooms(fetchedRooms);
       setLastUpdate(new Date().toISOString());
+      setIsRoomsLoading(false);
     } catch (error) {
       console.error("Failed to fetch rooms:", error);
+      setIsRoomsLoading(false);
     }
   }, [setRooms, setLastUpdate]);
 
@@ -50,6 +53,7 @@ export function useRooms() {
         if (data.type === 'rooms_update') {
           setRooms(data.rooms);
           setLastUpdate(new Date().toISOString());
+          setIsRoomsLoading(false);
         }
       } catch (err) {
         console.error("Failed to parse SSE message:", err);
@@ -141,13 +145,15 @@ export function useRooms() {
       name: string,
       radminNetworkId: string,
       radminNetworkPassword: string,
-      password?: string
+      password?: string,
+      type?: string
     ) => {
       const room = await api.createRoom(
         name,
         radminNetworkId,
         radminNetworkPassword,
-        password
+        password,
+        type
       );
       await fetchRooms(); // Refresh room list
       return room;

@@ -4,6 +4,7 @@ export interface IUser extends Document {
   username: string;
   password: string; // bcrypt hash
   currentRoomId?: string;
+  role: "user" | "admin";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +31,11 @@ const UserSchema: Schema<IUser> = new Schema(
     currentRoomId: {
       type: String,
       default: null,
+    },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
     },
   },
   {

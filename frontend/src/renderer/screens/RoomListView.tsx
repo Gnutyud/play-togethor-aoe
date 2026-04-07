@@ -7,20 +7,36 @@ import CreateRoomModal from "../components/CreateRoomModal";
 import JoinRoomModal from "../components/JoinRoomModal";
 import UserAvatar from "../components/shared/UserAvatar";
 
+import SettingsModal from "../components/SettingsModal";
+import { useStore } from "../store/useStore";
+
 export default function RoomListView() {
   const { user, logout } = useAuth();
   const { t, lang, changeLanguage } = useI18n();
-  const { rooms, startPolling, stopPolling, joinRoom, createRoom } = useRooms();
+  const { rooms, startPolling, stopPolling, joinRoom, createRoom, deleteRoom } = useRooms();
+  const { isRoomsLoading } = useStore();
 
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [joinRoomId, setJoinRoomId] = useState<string | null>(null);
   const [isJoiningId, setIsJoiningId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     startPolling();
-    return () => stopPolling();
-  }, [startPolling, stopPolling]);
+    
+    // Monitor Radmin status
+    const cleanup = (window as any).electronAPI.onRadminStatusChanged((payload: { running: boolean }) => {
+      if (!payload.running) {
+        setErrorMsg(t("radmin_closed_warning"));
+      }
+    });
+
+    return () => {
+      stopPolling();
+      cleanup();
+    };
+  }, [startPolling, stopPolling, t]);
 
   const handleJoinRoom = async (roomId: string) => {
     const room = rooms.find((r) => r.id === roomId);
@@ -58,10 +74,19 @@ export default function RoomListView() {
     name: string,
     radminId: string,
     radminPass: string,
-    password?: string
+    password?: string,
+    type?: string
   ) => {
-    await createRoom(name, radminId, radminPass, password);
+    await createRoom(name, radminId, radminPass, password, type);
     setIsCreatingRoom(false);
+  };
+
+  const handleDeleteRoom = async (roomId: string) => {
+    try {
+      await deleteRoom(roomId);
+    } catch (error: any) {
+      setErrorMsg("Failed to delete room");
+    }
   };
 
   const defaultRooms = rooms.filter((r) => r.type === "default");
@@ -110,6 +135,19 @@ export default function RoomListView() {
               </button>
             </div>
 
+            <div className="flex items-center gap-2 pl-6 border-l border-white/5">
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-2.5 bg-white/5 hover:bg-white/10 rounded-lg border border-white/5 transition-all text-gray-400 hover:text-white"
+                title={t("settings")}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 00-1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+            </div>
+
             <div className="flex items-center gap-3 pl-6 border-l border-white/5">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-bold text-white leading-none">{user?.username}</p>
@@ -147,7 +185,15 @@ export default function RoomListView() {
                 <span className="w-1.5 h-6 bg-indigo-500 rounded-full"></span>
                 <h3 className="text-lg font-black uppercase tracking-widest text-gray-400">{t("default_room")}</h3>
               </div>
-              {defaultRooms.length === 0 ? (
+              {isRoomsLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} className="bg-gray-900/40 rounded-xl h-32 border border-white/5 animate-pulse flex items-center justify-center">
+                      <p className="text-gray-700 text-xs font-black uppercase tracking-widest">{t("loading_rooms")}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : defaultRooms.length === 0 ? (
                 <div className="bg-white/5 border border-dashed border-white/10 rounded-2xl p-12 text-center">
                   <p className="text-gray-600 font-medium">{t("no_public_rooms")}</p>
                 </div>
@@ -158,6 +204,7 @@ export default function RoomListView() {
                       key={room.id}
                       room={room}
                       onJoin={handleJoinRoom}
+                      onDelete={handleDeleteRoom}
                       isJoining={isJoiningId === room.id}
                     />
                   ))}
@@ -171,7 +218,13 @@ export default function RoomListView() {
                 <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
                 <h3 className="text-lg font-black uppercase tracking-widest text-gray-400">{t("custom_room")}</h3>
               </div>
-              {customRooms.length === 0 ? (
+              {isRoomsLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} className="bg-gray-900/40 rounded-xl h-32 border border-white/5 animate-pulse"></div>
+                  ))}
+                </div>
+              ) : customRooms.length === 0 ? (
                 <div className="bg-white/5 border border-dashed border-white/10 rounded-2xl p-12 text-center group hover:bg-white/10 transition-all cursor-pointer" onClick={() => setIsCreatingRoom(true)}>
                   <p className="text-gray-600 font-medium group-hover:text-gray-400 transition-colors">{t("be_first_host")}</p>
                 </div>
@@ -182,6 +235,7 @@ export default function RoomListView() {
                       key={room.id}
                       room={room}
                       onJoin={handleJoinRoom}
+                      onDelete={handleDeleteRoom}
                       isJoining={isJoiningId === room.id}
                     />
                   ))}
@@ -225,6 +279,11 @@ export default function RoomListView() {
         roomName={rooms.find((r) => r.id === joinRoomId)?.name || ""}
         onClose={() => setJoinRoomId(null)}
         onJoin={handleJoinWithPassword}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
       />
     </div>
   );

@@ -56,7 +56,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Window Controls
   minimizeWindow: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MINIMIZE),
   maximizeWindow: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MAXIMIZE),
-  closeWindow: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_CLOSE),
+  // Events
+  onRadminStatusChanged: (callback: (payload: { running: boolean }) => void) => {
+    const subscription = (_event: any, payload: { running: boolean }) =>
+      callback(payload);
+    ipcRenderer.on("radmin-status-changed", subscription);
+    return () => ipcRenderer.removeListener("radmin-status-changed", subscription);
+  },
 });
 
 // Type declaration for window.electronAPI
@@ -81,6 +87,7 @@ declare global {
       minimizeWindow: () => void;
       maximizeWindow: () => void;
       closeWindow: () => void;
+      onRadminStatusChanged: (callback: (payload: { running: boolean }) => void) => () => void;
     };
   }
 }
