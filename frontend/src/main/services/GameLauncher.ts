@@ -1,4 +1,5 @@
 import { spawn, ChildProcess } from "child_process";
+import path from "path";
 import { GameConfig } from "../../shared/types";
 import { GameDetector } from "./GameDetector";
 import { getLogger } from "../utils/logger";
@@ -68,16 +69,22 @@ export class GameLauncher {
         args.push(`/res:${config.resolution}`);
       }
 
-      logger.info(`Launching game: ${gamePath}`, { args });
+      const gameDir = path.dirname(gamePath);
+      logger.info(`Launching game: ${gamePath} from CWD: ${gameDir}`, { args });
 
       // Spawn game process
       this.gameProcess = spawn(gamePath, args, {
+        cwd: gameDir, // IMPORTANT: AOE must run from its directory to load assets
         detached: true,
         stdio: "ignore",
+        shell: true, // Use shell to handle spaces in paths
+        windowsVerbatimArguments: true,
       });
 
       // Unref so parent process can exit independently
-      this.gameProcess.unref();
+      if (this.gameProcess) {
+        this.gameProcess.unref();
+      }
 
       this.gameProcess.on("error", (error) => {
         logger.error("Game process error:", error);

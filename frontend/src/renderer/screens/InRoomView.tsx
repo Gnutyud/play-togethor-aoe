@@ -202,108 +202,82 @@ export default function InRoomView() {
             {/* Action Panel */}
             <div className="lg:col-span-8 space-y-8">
               {/* VPN Section */}
-              <div className="bg-gray-900/40 backdrop-blur-sm border border-white/5 rounded-2xl p-8 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-blue-600/10 transition-all"></div>
-
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
-                  <h3 className="text-lg font-black uppercase tracking-widest text-gray-400">
-                    Radmin VPN
-                  </h3>
-                </div>
-
-                <div
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"
-                >
-                  <div className="bg-black/20 border border-white/5 rounded-xl p-4 relative group/item">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                        {t("radmin_id")}
-                      </p>
-                      <button 
-                        onClick={() => handleCopy(currentRoom.radminNetworkId, 'id')}
-                        className="text-[8px] text-blue-500 hover:text-blue-400 font-black uppercase tracking-widest transition-colors"
-                      >
-                        {copiedId ? "✓ COPIED" : "COPY"}
-                      </button>
-                    </div>
-                    <p className="font-mono text-sm text-blue-400 select-all truncate pr-16">
-                      {currentRoom.radminNetworkId}
-                    </p>
-                    {isAdmin && (
-                      <button
-                        onClick={() => {
-                          setEditRadminId(currentRoom.radminNetworkId);
-                          setEditRadminPass(currentRoom.radminNetworkPassword);
-                          setIsEditingRadmin(true);
-                        }}
-                        className="absolute bottom-2 right-2 p-1 bg-white/5 hover:bg-white/10 rounded opacity-0 group-hover/item:opacity-100 transition-opacity"
-                      >
-                        <span className="text-[8px] font-black uppercase tracking-widest">
-                          {t("edit")}
-                        </span>
-                      </button>
-                    )}
-                  </div>
-                  <div className="bg-black/20 border border-white/5 rounded-xl p-4 relative group/item">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                        {t("radmin_pass")}
-                      </p>
-                      <button 
-                        onClick={() => handleCopy(currentRoom.radminNetworkPassword, 'pass')}
-                        className="text-[8px] text-blue-500 hover:text-blue-400 font-black uppercase tracking-widest transition-colors"
-                      >
-                        {copiedPass ? "✓ COPIED" : "COPY"}
-                      </button>
-                    </div>
-                    <p className="font-mono text-sm text-blue-400 select-all truncate">
-                      {currentRoom.radminNetworkPassword}
-                    </p>
-                  </div>
-                </div>
-
-                {vpnConnection?.connected ? (
-                  <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500">
-                    <div className="flex items-center gap-3 px-6 py-4 bg-green-500/10 border border-green-500/20 rounded-xl">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
-                      <span className="text-sm font-bold text-green-400 uppercase tracking-wide">
-                        ✓ {t("waiting")}... (Connected to Host Network)
-                      </span>
-                    </div>
-                    <button
-                      onClick={handleDisconnectVpn}
-                      className="w-full py-4 bg-gray-800 hover:bg-gray-700 text-gray-400 font-black uppercase tracking-widest text-xs rounded-xl transition-all"
-                    >
-                      Disconnect
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <button
-                      onClick={handleConnectVpn}
-                      disabled={isConnectingVpn}
-                      className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-sm rounded-xl shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all disabled:bg-gray-800"
-                    >
-                      {isConnectingVpn ? "⏳ Connecting..." : "🔌 Join Network"}
-                    </button>
-                    {vpnError && (
-                      <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 flex items-start gap-3">
-                        <span className="text-red-400 text-lg shrink-0">⚠️</span>
-                        <p className="text-xs text-red-300 font-bold leading-relaxed">{vpnError}</p>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-black/20 border border-white/5 rounded-xl p-4 relative group/item">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                          RADMIN ID
+                        </p>
+                        <button 
+                          onClick={() => handleCopy(currentRoom.radminNetworkId, 'id')}
+                          className="text-[8px] text-blue-500 hover:text-blue-400 font-black uppercase tracking-widest transition-colors"
+                        >
+                          {copiedId ? "✓ COPIED" : "COPY"}
+                        </button>
                       </div>
-                    )}
-                    <div className="bg-white/5 rounded-xl p-5 border border-white/5">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-blue-400 mb-2">
-                        {t("how_it_works")}
-                      </h4>
-                      <p className="text-xs text-gray-500 leading-relaxed font-medium">
-                        {t("how_it_works_desc")}
+                      <p className="font-mono text-sm text-blue-400 select-all truncate pr-16 leading-relaxed">
+                        {currentRoom.radminNetworkId}
+                      </p>
+                    </div>
+                    <div className="bg-black/20 border border-white/5 rounded-xl p-4 relative group/item">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                          RADMIN PASSWORD
+                        </p>
+                        <button 
+                          onClick={() => handleCopy(currentRoom.radminNetworkPassword, 'pass')}
+                          className="text-[8px] text-blue-500 hover:text-blue-400 font-black uppercase tracking-widest transition-colors"
+                        >
+                          {copiedPass ? "✓ COPIED" : "COPY"}
+                        </button>
+                      </div>
+                      <p className="font-mono text-sm text-blue-400 select-all truncate leading-relaxed">
+                        {currentRoom.radminNetworkPassword}
                       </p>
                     </div>
                   </div>
-                )}
-              </div>
+
+                  <button
+                    onClick={handleConnectVpn}
+                    disabled={isConnectingVpn}
+                    className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-sm rounded-xl shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all disabled:opacity-50"
+                  >
+                    {isConnectingVpn ? "⏳ OPENING..." : "🔌 OPEN RADMIN VPN"}
+                  </button>
+
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-5 border-dashed">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-blue-400 mb-4 flex items-center gap-2">
+                       <span className="w-1.5 h-3 bg-blue-500 rounded-full animate-pulse"></span>
+                       HƯỚNG DẪN KẾT NỐI (CONNECTION GUIDE)
+                    </h4>
+                    <div className="space-y-3">
+                       <div className="flex items-start gap-3">
+                         <span className="w-5 h-5 flex items-center justify-center bg-blue-600 rounded-full text-[10px] font-black shrink-0">1</span>
+                         <p className="text-[11px] text-gray-300 font-medium">Bấm nút <span className="text-blue-400 font-bold">MỞ RADMIN VPN</span> ở trên.</p>
+                       </div>
+                       <div className="flex items-start gap-3">
+                         <span className="w-5 h-5 flex items-center justify-center bg-blue-600 rounded-full text-[10px] font-black shrink-0">2</span>
+                         <p className="text-[11px] text-gray-300 font-medium">Trong Radmin VPN, chọn menu <span className="text-blue-400 font-bold">Network &gt; Join Network</span> (hoặc nhấn phím <span className="text-yellow-500">+</span>).</p>
+                       </div>
+                       <div className="flex items-start gap-3">
+                         <span className="w-5 h-5 flex items-center justify-center bg-blue-600 rounded-full text-[10px] font-black shrink-0">3</span>
+                         <p className="text-[11px] text-gray-300 font-medium">Sử dụng nút <span className="text-blue-400 font-bold">COPY</span> ở trên để Copy ID/Password và Paste vào Radmin và bấm Join.</p>
+                       </div>
+                       <div className="flex items-start gap-3">
+                         <span className="w-5 h-5 flex items-center justify-center bg-green-600 rounded-full text-[10px] font-black shrink-0">OK</span>
+                         <p className="text-[11px] text-green-400 font-bold">Sau khi đã Join, hãy nhấn KHỞI ĐỘNG GAME bên dưới!</p>
+                       </div>
+                    </div>
+                  </div>
+
+                  {vpnError && (
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4 py-3 flex items-start gap-3">
+                      <span className="text-yellow-400 text-lg shrink-0">ℹ️</span>
+                      <p className="text-xs text-yellow-300 font-bold leading-relaxed">{vpnError}</p>
+                    </div>
+                  )}
+                </div>
 
               {/* Game Section */}
               <div className="bg-gray-900/40 backdrop-blur-sm border border-white/5 rounded-2xl p-8 group">
