@@ -47,10 +47,10 @@ export class RadminVpnManager {
       const networkId = connection.networkId || "";
       const password = connection.password || "";
 
-      if (!networkId || !password) {
+      if (!networkId) {
         return {
           success: false,
-          message: "Network ID and Password are required",
+          message: "Network ID is required",
         };
       }
 
@@ -66,11 +66,12 @@ export class RadminVpnManager {
           message: "Successfully connected to VPN network!",
         };
       } else {
+        logger.warn("VPN connect returned failure:", result.error);
         return {
           success: false,
           message:
             result.error ||
-            "Failed to auto-connect. Please connect manually in Radmin VPN.",
+            "Failed to connect. Please open Radmin VPN and join the network manually.",
         };
       }
     } catch (error: any) {
@@ -167,25 +168,26 @@ export class RadminVpnManager {
           stderr += data.toString();
         });
 
-        // Set a 15 second timeout
+        // Set a 30 second timeout (CLI may need time to start Radmin VPN)
         const timeout = setTimeout(() => {
           ps.kill();
-          logger.error("PowerShell connect timed out after 15s");
-          resolve({ success: false, error: "Connection timed out. Please check Radmin VPN." });
-        }, 15000);
+          logger.error("PowerShell connect timed out after 30s");
+          resolve({ success: false, error: "Connection timed out. Please open Radmin VPN manually and join the network." });
+        }, 30000);
 
         ps.on("close", (code: number) => {
           clearTimeout(timeout);
-          logger.info("PowerShell output:", stdout);
+          logger.info("PowerShell exited with code:", code);
+          if (stdout) logger.info("stdout:", stdout);
+          if (stderr) logger.warn("stderr:", stderr);
 
-          if (code !== 0 && !stdout.includes("successfully") && !stdout.includes("initiated")) {
-            logger.error("PowerShell stderr:", stderr);
+          if (code === 0) {
+            resolve({ success: true });
+          } else {
             resolve({ 
               success: false, 
-              error: stderr.trim() || `Process exited with code ${code}` 
+              error: stderr.trim() || `Radmin VPN CLI exited with code ${code}` 
             });
-          } else {
-            resolve({ success: true });
           }
         });
       } catch (error: any) {

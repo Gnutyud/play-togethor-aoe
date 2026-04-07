@@ -34,7 +34,13 @@ export default function RoomListView() {
     const room = rooms.find((r) => r.id === roomId);
     if (!room) return;
 
-    if (room.hasPassword) {
+    // If room has password, always show password modal (owner also needs to enter)
+    // unless we can auto-pass (owner already knows the password)
+    // For simplicity: owner still needs to enter password for private rooms
+    // But we skip the modal for the owner and allow joining without password
+    const isOwner = room.ownerId === user?.id;
+
+    if (room.hasPassword && !isOwner) {
       setJoinRoomId(roomId);
       return;
     }
@@ -54,12 +60,8 @@ export default function RoomListView() {
     if (!joinRoomId) return;
 
     setErrorMsg(null);
-    try {
-      await joinRoom(joinRoomId, password);
-      setJoinRoomId(null);
-    } catch (error: any) {
-      setErrorMsg(error.response?.data?.error || "Invalid password");
-    }
+    await joinRoom(joinRoomId, password);
+    setJoinRoomId(null);
   };
 
   const handleCreateRoom = async (

@@ -20,11 +20,13 @@ export default function InRoomView() {
   const [editRadminId, setEditRadminId] = useState("");
   const [editRadminPass, setEditRadminPass] = useState("");
   const [isUpdatingRadmin, setIsUpdatingRadmin] = useState(false);
+  const [vpnError, setVpnError] = useState<string | null>(null);
 
   if (!currentRoom) return null;
 
   const handleConnectVpn = async () => {
     setIsConnectingVpn(true);
+    setVpnError(null);
     try {
       const result = await (window as any).electronAPI.connectVpn({
         connected: true,
@@ -40,11 +42,13 @@ export default function InRoomView() {
           password: currentRoom.radminNetworkPassword,
         });
       } else {
-        // Only alert if manual click failed, but here we keep it simple
-        console.error("VPN Auto-connect failed:", result.message);
+        const errMsg = result.message || "Failed to connect to VPN network.";
+        console.error("VPN connect failed:", errMsg);
+        setVpnError(errMsg);
       }
     } catch (error: any) {
       console.error("VPN Error:", error.message);
+      setVpnError(error.message || "Unexpected error connecting to VPN.");
     } finally {
       setIsConnectingVpn(false);
     }
@@ -246,14 +250,20 @@ export default function InRoomView() {
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     <button
                       onClick={handleConnectVpn}
                       disabled={isConnectingVpn}
                       className="w-full py-5 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-sm rounded-xl shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all disabled:bg-gray-800"
                     >
-                      {isConnectingVpn ? "..." : "🔌 Join Network"}
+                      {isConnectingVpn ? "⏳ Connecting..." : "🔌 Join Network"}
                     </button>
+                    {vpnError && (
+                      <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 flex items-start gap-3">
+                        <span className="text-red-400 text-lg shrink-0">⚠️</span>
+                        <p className="text-xs text-red-300 font-bold leading-relaxed">{vpnError}</p>
+                      </div>
+                    )}
                     <div className="bg-white/5 rounded-xl p-5 border border-white/5">
                       <h4 className="text-xs font-black uppercase tracking-widest text-blue-400 mb-2">
                         {t("how_it_works")}
