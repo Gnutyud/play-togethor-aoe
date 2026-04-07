@@ -37,8 +37,7 @@ const UserSchema: Schema<IUser> = new Schema(
   }
 );
 
-// Index for faster queries
-UserSchema.index({ username: 1 });
+// Use unique index defined in schema field
 
 const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
