@@ -36,6 +36,7 @@ export default function RoomListView() {
 
     // Always show password modal for rooms with password
     if (room.hasPassword) {
+      console.log("Room has password, opening modal for:", roomId);
       setJoinRoomId(roomId);
       return;
     }
@@ -45,7 +46,13 @@ export default function RoomListView() {
     try {
       await joinRoom(roomId);
     } catch (error: any) {
-      setErrorMsg(error.response?.data?.error || "Failed to join room");
+      const errorData = error.response?.data?.error || "";
+      // FAILSAFE: If backend says password is required, open the modal even if we thought it didn't need one
+      if (errorData.toLowerCase().includes("password")) {
+        setJoinRoomId(roomId);
+      } else {
+        setErrorMsg(errorData || "Failed to join room");
+      }
     } finally {
       setIsJoiningId(null);
     }
@@ -54,6 +61,9 @@ export default function RoomListView() {
   const handleJoinWithPassword = async (password: string) => {
     if (!joinRoomId) return;
 
+    setErrorMsg(null);
+    // Note: We don't catch here, we let JoinRoomModal's internal try/catch handle it
+    // so the modal stays open on error and shows the message.
     await joinRoom(joinRoomId, password);
     setJoinRoomId(null);
   };

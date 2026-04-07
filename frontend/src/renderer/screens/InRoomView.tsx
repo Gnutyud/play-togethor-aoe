@@ -21,6 +21,8 @@ export default function InRoomView() {
   const [editRadminPass, setEditRadminPass] = useState("");
   const [isUpdatingRadmin, setIsUpdatingRadmin] = useState(false);
   const [vpnError, setVpnError] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState(false);
+  const [copiedPass, setCopiedPass] = useState(false);
 
   if (!currentRoom) return null;
 
@@ -42,9 +44,9 @@ export default function InRoomView() {
           password: currentRoom.radminNetworkPassword,
         });
       } else {
-        const errMsg = result.message || "Failed to connect to VPN network.";
+        const errMsg = result.message || "Failed to open Radmin VPN.";
         console.error("VPN connect failed:", errMsg);
-        setVpnError(errMsg);
+        setVpnError("Radmin VPN opened. Please copy the Network ID and Password below and join the network manually.");
       }
     } catch (error: any) {
       console.error("VPN Error:", error.message);
@@ -141,6 +143,17 @@ export default function InRoomView() {
   const isAdmin = user?.role === "admin";
   const canManage = isOwner || isAdmin;
 
+  const handleCopy = (text: string, type: 'id' | 'pass') => {
+    navigator.clipboard.writeText(text);
+    if (type === 'id') {
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2000);
+    } else {
+      setCopiedPass(true);
+      setTimeout(() => setCopiedPass(false), 2000);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#0a0a0c] text-white overflow-hidden">
       {/* Premium Header */}
@@ -200,13 +213,21 @@ export default function InRoomView() {
                 </div>
 
                 <div
-                  className={`grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 ${isOwner || isAdmin ? "" : "hidden"}`}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"
                 >
                   <div className="bg-black/20 border border-white/5 rounded-xl p-4 relative group/item">
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">
-                      {t("radmin_id")}
-                    </p>
-                    <p className="font-mono text-sm text-blue-400 select-all">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                        {t("radmin_id")}
+                      </p>
+                      <button 
+                        onClick={() => handleCopy(currentRoom.radminNetworkId, 'id')}
+                        className="text-[8px] text-blue-500 hover:text-blue-400 font-black uppercase tracking-widest transition-colors"
+                      >
+                        {copiedId ? "✓ COPIED" : "COPY"}
+                      </button>
+                    </div>
+                    <p className="font-mono text-sm text-blue-400 select-all truncate pr-16">
                       {currentRoom.radminNetworkId}
                     </p>
                     {isAdmin && (
@@ -216,7 +237,7 @@ export default function InRoomView() {
                           setEditRadminPass(currentRoom.radminNetworkPassword);
                           setIsEditingRadmin(true);
                         }}
-                        className="absolute top-2 right-2 p-1 bg-white/5 hover:bg-white/10 rounded opacity-0 group-hover/item:opacity-100 transition-opacity"
+                        className="absolute bottom-2 right-2 p-1 bg-white/5 hover:bg-white/10 rounded opacity-0 group-hover/item:opacity-100 transition-opacity"
                       >
                         <span className="text-[8px] font-black uppercase tracking-widest">
                           {t("edit")}
@@ -224,11 +245,19 @@ export default function InRoomView() {
                       </button>
                     )}
                   </div>
-                  <div className="bg-black/20 border border-white/5 rounded-xl p-4">
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">
-                      {t("radmin_pass")}
-                    </p>
-                    <p className="font-mono text-sm text-blue-400 select-all">
+                  <div className="bg-black/20 border border-white/5 rounded-xl p-4 relative group/item">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                        {t("radmin_pass")}
+                      </p>
+                      <button 
+                        onClick={() => handleCopy(currentRoom.radminNetworkPassword, 'pass')}
+                        className="text-[8px] text-blue-500 hover:text-blue-400 font-black uppercase tracking-widest transition-colors"
+                      >
+                        {copiedPass ? "✓ COPIED" : "COPY"}
+                      </button>
+                    </div>
+                    <p className="font-mono text-sm text-blue-400 select-all truncate">
                       {currentRoom.radminNetworkPassword}
                     </p>
                   </div>
