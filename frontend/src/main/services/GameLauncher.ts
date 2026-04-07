@@ -72,13 +72,16 @@ export class GameLauncher {
       const gameDir = path.dirname(gamePath);
       logger.info(`Launching game: ${gamePath} from CWD: ${gameDir}`, { args });
 
+      // On Windows, we often need to wrap the command in quotes if it has spaces
+      const command = process.platform === 'win32' ? `"${gamePath}"` : gamePath;
+
       // Spawn game process
-      this.gameProcess = spawn(gamePath, args, {
-        cwd: gameDir, // IMPORTANT: AOE must run from its directory to load assets
+      this.gameProcess = spawn(command, args, {
+        cwd: gameDir,
         detached: true,
         stdio: "ignore",
-        shell: true, // Use shell to handle spaces in paths
-        windowsVerbatimArguments: true,
+        shell: true,
+        windowsHide: true,
       });
 
       // Unref so parent process can exit independently
