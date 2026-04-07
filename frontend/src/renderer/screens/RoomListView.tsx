@@ -14,7 +14,8 @@ export default function RoomListView() {
 
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [joinRoomId, setJoinRoomId] = useState<string | null>(null);
-  const [isJoining, setIsJoining] = useState(false);
+  const [isJoiningId, setIsJoiningId] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     startPolling();
@@ -30,24 +31,26 @@ export default function RoomListView() {
       return;
     }
 
-    setIsJoining(true);
+    setIsJoiningId(roomId);
+    setErrorMsg(null);
     try {
       await joinRoom(roomId);
     } catch (error: any) {
-      alert(error.response?.data?.error || "Failed to join room");
+      setErrorMsg(error.response?.data?.error || "Failed to join room");
     } finally {
-      setIsJoining(false);
+      setIsJoiningId(null);
     }
   };
 
   const handleJoinWithPassword = async (password: string) => {
     if (!joinRoomId) return;
 
+    setErrorMsg(null);
     try {
       await joinRoom(joinRoomId, password);
       setJoinRoomId(null);
     } catch (error: any) {
-      alert(error.response?.data?.error || "Invalid password");
+      setErrorMsg(error.response?.data?.error || "Invalid password");
     }
   };
 
@@ -155,7 +158,7 @@ export default function RoomListView() {
                       key={room.id}
                       room={room}
                       onJoin={handleJoinRoom}
-                      isJoining={isJoining}
+                      isJoining={isJoiningId === room.id}
                     />
                   ))}
                 </div>
@@ -179,13 +182,34 @@ export default function RoomListView() {
                       key={room.id}
                       room={room}
                       onJoin={handleJoinRoom}
-                      isJoining={isJoining}
+                      isJoining={isJoiningId === room.id}
                     />
                   ))}
                 </div>
               )}
             </section>
           </div>
+
+          {errorMsg && (
+            <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="bg-red-900/90 backdrop-blur-md border border-red-500/50 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4">
+                <div className="bg-red-500 p-1 rounded-full">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-red-300 mb-0.5">Alert</p>
+                  <p className="text-sm font-bold">{errorMsg}</p>
+                </div>
+                <button onClick={() => setErrorMsg(null)} className="ml-4 text-white/50 hover:text-white transition-colors">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

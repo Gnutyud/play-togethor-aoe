@@ -30,7 +30,23 @@ export async function GET(request: NextRequest) {
             .sort({ type: -1, name: 1 })
             .select('-password');
             
-          sendEvent({ type: 'rooms_update', rooms });
+          const roomsData = rooms.map((room: any) => ({
+            id: room._id.toString(),
+            type: room.type,
+            name: room.name,
+            hasPassword: !!room.password,
+            maxPlayers: room.maxPlayers,
+            playerCount: room.players.length,
+            isFull: room.players.length >= room.maxPlayers,
+            players: room.players.map((p: any) => ({
+              userId: p.userId,
+              username: p.username,
+            })),
+            ownerId: room.ownerId,
+            createdAt: room.createdAt,
+          }));
+            
+          sendEvent({ type: 'rooms_update', rooms: roomsData });
         } catch (err) {
           console.error("SSE Poll error:", err);
         }
