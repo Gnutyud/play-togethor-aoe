@@ -144,7 +144,7 @@ export class RadminVpnManager {
     return new Promise((resolve) => {
       try {
         const scriptPath = app.isPackaged
-          ? path.join(process.resourcesPath, "resources", "radmin-connect.ps1")
+          ? path.join(process.resourcesPath, "radmin-connect.ps1")
           : path.join(__dirname, "../../../resources/radmin-connect.ps1");
 
         logger.info(`Using PowerShell script: ${scriptPath}`);
@@ -207,7 +207,7 @@ export class RadminVpnManager {
     return new Promise((resolve) => {
       try {
         const scriptPath = app.isPackaged
-          ? path.join(process.resourcesPath, "resources", "radmin-disconnect.ps1")
+          ? path.join(process.resourcesPath, "radmin-disconnect.ps1")
           : path.join(__dirname, "../../../resources/radmin-disconnect.ps1");
 
         const ps = spawn("powershell.exe", [
