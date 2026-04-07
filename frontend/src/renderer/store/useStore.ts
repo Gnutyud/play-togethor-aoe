@@ -6,6 +6,8 @@ import {
   RadminVpnConnection,
 } from "../../shared/types";
 
+type Language = "vi" | "en";
+
 interface AppState {
   // Auth
   user: User | null;
@@ -32,6 +34,8 @@ interface AppState {
   setIsPolling: (isPolling: boolean) => void;
   lastUpdate: string | null;
   setLastUpdate: (timestamp: string) => void;
+  lang: Language;
+  setLang: (lang: Language) => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -65,4 +69,6 @@ export const useStore = create<AppState>((set) => ({
   setIsPolling: (isPolling) => set({ isPolling }),
   lastUpdate: null,
   setLastUpdate: (timestamp) => set({ lastUpdate: timestamp }),
+  lang: "vi",
+  setLang: (lang) => set({ lang }),
 }));

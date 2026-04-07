@@ -46,6 +46,12 @@ const translations = {
     enter_password: "Nhập mật khẩu phòng",
     private_notice: "Phòng này yêu cầu mật khẩu",
     radmin_notice: "* Tạo một mạng trong Radmin VPN và nhập thông tin vào đây.",
+    no_public_rooms: "Hiện tại không có phòng công cộng nào.",
+    be_first_host: "Hãy là người đầu tiên tạo trận đấu!",
+    private_in_app: "Phòng riêng (Mật khẩu ứng dụng)",
+    room_name_placeholder: "Nhập tên phòng",
+    radmin_id_placeholder: "Nhập ID mạng",
+    radmin_pass_placeholder: "Nhập mật khẩu mạng",
     
     // In Room
     how_it_works: "Cách thức hoạt động",
@@ -104,6 +110,12 @@ const translations = {
     enter_password: "Enter room password",
     private_notice: "This room requires a password",
     radmin_notice: "* Create a network in Radmin VPN and enter details here.",
+    no_public_rooms: "No public rooms available at the moment.",
+    be_first_host: "Be the first to host a custom match!",
+    private_in_app: "Private room (In-app password)",
+    room_name_placeholder: "Enter room name",
+    radmin_id_placeholder: "Network ID",
+    radmin_pass_placeholder: "Password",
     
     // In Room
     how_it_works: "How it works",
