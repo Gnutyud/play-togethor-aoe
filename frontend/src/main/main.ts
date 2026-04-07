@@ -202,11 +202,9 @@ app.whenReady().then(async () => {
   const radminReady = process.platform === "win32" ? await checkAndInstallRadmin() : true;
 
   if (!radminReady) {
-    logger.error(
-      "Radmin VPN installation failed or cancelled, exiting application"
+    logger.warn(
+      "Radmin VPN check/installation was not completed successfully. Continuing to UI for manual check."
     );
-    app.quit();
-    return;
   }
 
   // Ensure Radmin VPN is running

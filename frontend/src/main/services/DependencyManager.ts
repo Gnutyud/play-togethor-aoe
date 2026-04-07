@@ -153,26 +153,36 @@ export class DependencyManager {
    * Find Radmin VPN in Windows Registry
    */
   private async findRadminInRegistry(): Promise<string | null> {
-    try {
-      // Try to query registry for Radmin VPN installation path
-      const { stdout } = await execAsync(
-        'reg query "HKLM\\SOFTWARE\\Radmin VPN" /v InstallPath'
-      );
+    const registryKeys = [
+      'HKLM\\SOFTWARE\\Radmin VPN',
+      'HKLM\\SOFTWARE\\WOW6432Node\\Radmin VPN'
+    ];
 
-      // Parse the output to get the path
-      const match = stdout.match(/InstallPath\s+REG_SZ\s+(.+)/);
-      if (match && match[1]) {
-        const installPath = match[1].trim();
-        const exePath = path.join(installPath, APP_CONFIG.RADMIN_VPN_EXE_NAME);
+    const exeNames = ["RvpnGui.exe", "Radmin.exe", "RadminVPN.exe"];
 
-        if (this.fileExists(exePath)) {
-          logger.info(`Found Radmin VPN via registry: ${exePath}`);
-          return exePath;
+    for (const key of registryKeys) {
+      try {
+        // Try to query registry for Radmin VPN installation path
+        const { stdout } = await execAsync(
+          `reg query "${key}" /v InstallPath`
+        );
+
+        // Parse the output to get the path
+        const match = stdout.match(/InstallPath\s+REG_SZ\s+(.+)/);
+        if (match && match[1]) {
+          const installPath = match[1].trim();
+
+          for (const exeName of exeNames) {
+            const exePath = path.join(installPath, exeName);
+            if (this.fileExists(exePath)) {
+              logger.info(`Found Radmin VPN via registry (${key}): ${exePath}`);
+              return exePath;
+            }
+          }
         }
+      } catch (error) {
+        // Registry key not found or query failed
       }
-    } catch (error) {
-      // Registry key not found or query failed
-      logger.debug("Radmin VPN not found in registry");
     }
 
     return null;
