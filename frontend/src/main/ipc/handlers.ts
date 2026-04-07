@@ -93,7 +93,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
         logger.error("Failed to launch game", error);
         return { success: false, error: error.message };
       }
-    }
+    },
   );
 
   // ===== Radmin VPN Management =====
@@ -107,7 +107,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
     async (_event: IpcMainInvokeEvent, connection: any) => {
       logger.info("Connecting to VPN", { networkId: connection.networkId });
       return await vpnManager.connect(connection);
-    }
+    },
   );
 
   ipcMain.handle(IPC_CHANNELS.VPN_DISCONNECT, async () => {
@@ -127,14 +127,14 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
     IPC_CHANNELS.SETTINGS_GET,
     async (_event: IpcMainInvokeEvent, key: string) => {
       return store.get(key);
-    }
+    },
   );
 
   ipcMain.handle(
     IPC_CHANNELS.SETTINGS_SET,
     async (_event: IpcMainInvokeEvent, key: string, value: any) => {
       store.set(key, value);
-    }
+    },
   );
 
   // ===== Window Controls =====

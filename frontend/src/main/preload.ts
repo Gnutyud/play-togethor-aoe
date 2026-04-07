@@ -28,26 +28,20 @@ contextBridge.exposeInMainWorld("electronAPI", {
   selectGamePath: (): Promise<{ success: boolean; path?: string }> =>
     ipcRenderer.invoke(IPC_CHANNELS.GAME_SELECT_PATH),
 
-  async launch(
-    config: GameConfig
-  ): Promise<{ success: boolean; message: string }> {
-    if (process.platform !== "win32") {
-      return {
-        success: false,
-        message: "AOE I game is currently only supported on Windows.",
-      };
-    }
-    return ipcRenderer.invoke(IPC_CHANNELS.GAME_LAUNCH, config);
-  },
+  launchGame: (
+    config: GameConfig,
+  ): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke(IPC_CHANNELS.GAME_LAUNCH, config),
 
   // Radmin VPN Management
   checkVpnStatus: (): Promise<RadminVpnConnection> =>
     ipcRenderer.invoke(IPC_CHANNELS.VPN_CHECK_STATUS),
 
   connectVpn: (
-    connection: any
+    networkId: string,
+    password: string,
   ): Promise<{ success: boolean; error?: string }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.VPN_CONNECT, connection),
+    ipcRenderer.invoke(IPC_CHANNELS.VPN_CONNECT, networkId, password),
 
   disconnectVpn: (): Promise<{ success: boolean }> =>
     ipcRenderer.invoke(IPC_CHANNELS.VPN_DISCONNECT),
@@ -62,13 +56,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Window Controls
   minimizeWindow: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MINIMIZE),
   maximizeWindow: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MAXIMIZE),
-  // Events
-  onRadminStatusChanged: (callback: (payload: { running: boolean }) => void) => {
-    const subscription = (_event: any, payload: { running: boolean }) =>
-      callback(payload);
-    ipcRenderer.on("radmin-status-changed", subscription);
-    return () => ipcRenderer.removeListener("radmin-status-changed", subscription);
-  },
+  closeWindow: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_CLOSE),
 });
 
 // Type declaration for window.electronAPI
@@ -80,11 +68,12 @@ declare global {
       detectGame: () => Promise<{ found: boolean; path?: string }>;
       selectGamePath: () => Promise<{ success: boolean; path?: string }>;
       launchGame: (
-        config: GameConfig
+        config: GameConfig,
       ) => Promise<{ success: boolean; error?: string }>;
       checkVpnStatus: () => Promise<RadminVpnConnection>;
       connectVpn: (
-        connection: any
+        networkId: string,
+        password: string,
       ) => Promise<{ success: boolean; error?: string }>;
       disconnectVpn: () => Promise<{ success: boolean }>;
       getSettings: <T = any>(key: string) => Promise<T>;
@@ -92,7 +81,6 @@ declare global {
       minimizeWindow: () => void;
       maximizeWindow: () => void;
       closeWindow: () => void;
-      onRadminStatusChanged: (callback: (payload: { running: boolean }) => void) => () => void;
     };
   }
 }

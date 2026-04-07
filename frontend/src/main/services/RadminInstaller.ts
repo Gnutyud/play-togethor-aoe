@@ -25,7 +25,7 @@ export class RadminInstaller {
       // Production: installer is directly in resources folder
       return path.join(
         process.resourcesPath,
-        RadminInstaller.INSTALLER_FILENAME
+        RadminInstaller.INSTALLER_FILENAME,
       );
     } else {
       // Development: installer is in project resources folder
@@ -34,7 +34,7 @@ export class RadminInstaller {
         __dirname,
         "../../../..",
         "resources",
-        RadminInstaller.INSTALLER_FILENAME
+        RadminInstaller.INSTALLER_FILENAME,
       );
     }
   }
@@ -59,78 +59,40 @@ export class RadminInstaller {
    * Checks common installation paths
    */
   async isInstalled(): Promise<boolean> {
-    if (process.platform !== "win32") return true;
     logger.info("Checking if Radmin VPN is already installed");
 
     const commonPaths = [
-      "C:\\Program Files (x86)\\Radmin VPN\\RvpnGui.exe",
-      "C:\\Program Files\\Radmin VPN\\RvpnGui.exe",
       "C:\\Program Files (x86)\\Radmin VPN\\Radmin.exe",
       "C:\\Program Files\\Radmin VPN\\Radmin.exe",
-      "C:\\Program Files (x86)\\Radmin VPN\\RadminVPN.exe",
-      "C:\\Program Files\\Radmin VPN\\RadminVPN.exe",
     ];
 
     for (const exePath of commonPaths) {
-      if (this.fileExists(exePath)) {
+      try {
+        accessSync(exePath, constants.F_OK);
         logger.info(`Radmin VPN already installed at: ${exePath}`);
         return true;
+      } catch {
+        // Path doesn't exist, continue checking
+        logger.debug(`Not found at: ${exePath}`);
       }
     }
 
-    if (await this.findRadminInRegistry()) {
-      return true;
+    // Check registry
+    try {
+      const { stdout } = await execAsync(
+        'reg query "HKLM\\SOFTWARE\\Radmin VPN" /v InstallPath',
+        { timeout: 5000 },
+      );
+      if (stdout && stdout.trim()) {
+        logger.info("Radmin VPN found in registry");
+        return true;
+      }
+    } catch {
+      // Registry key doesn't exist
     }
 
     logger.info("Radmin VPN not installed");
     return false;
-  }
-
-  private async findRadminInRegistry(): Promise<string | null> {
-    const registryKeys = [
-      'HKLM\\SOFTWARE\\Radmin VPN',
-      'HKLM\\SOFTWARE\\WOW6432Node\\Radmin VPN'
-    ];
-
-    const exeNames = ["RvpnGui.exe", "Radmin.exe", "RadminVPN.exe"];
-
-    for (const key of registryKeys) {
-      try {
-        // Try to query registry for Radmin VPN installation path
-        const { stdout } = await execAsync(
-          `reg query "${key}" /v InstallPath`
-        );
-
-        // Parse the output to get the path
-        const match = stdout.match(/InstallPath\s+REG_SZ\s+(.+)/);
-        if (match && match[1]) {
-          const installPath = match[1].trim();
-
-          for (const exeName of exeNames) {
-            const exePath = path.join(installPath, exeName);
-            if (this.fileExists(exePath)) {
-              logger.info(`Found Radmin VPN via registry (${key}): ${exePath}`);
-              return exePath;
-            }
-          }
-        }
-      } catch (error) {
-        // Registry key not found or query failed
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Check if file exists and is accessible
-   */
-  private fileExists(filePath: string): boolean {
-    try {
-      accessSync(filePath, constants.F_OK);
-      return true;
-    } catch {
-      return false;
-    }
   }
 
   /**
@@ -179,7 +141,7 @@ export class RadminInstaller {
         const elapsed = Date.now() - startTime;
         const elapsedPercent = Math.min(
           80,
-          (elapsed / RadminInstaller.INSTALL_TIMEOUT_MS) * 100
+          (elapsed / RadminInstaller.INSTALL_TIMEOUT_MS) * 100,
         );
         progressPercent = Math.max(progressPercent, elapsedPercent);
 

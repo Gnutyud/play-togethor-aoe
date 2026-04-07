@@ -25,18 +25,10 @@ export default function RoomListView() {
   useEffect(() => {
     startPolling();
     
-    // Monitor Radmin status
-    const cleanup = (window as any).electronAPI.onRadminStatusChanged((payload: { running: boolean }) => {
-      if (!payload.running) {
-        setErrorMsg(t("radmin_closed_warning"));
-      }
-    });
-
     return () => {
       stopPolling();
-      cleanup();
     };
-  }, [startPolling, stopPolling, t]);
+  }, [startPolling, stopPolling]);
 
   const handleJoinRoom = async (roomId: string) => {
     const room = rooms.find((r) => r.id === roomId);

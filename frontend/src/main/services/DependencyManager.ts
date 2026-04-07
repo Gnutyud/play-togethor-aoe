@@ -29,14 +29,6 @@ export class DependencyManager {
     const radminStatus = await this.checkRadminVpn();
     const gameStatus = await this.checkAoeGame();
 
-    // If not windows, return successful check for development/testing on mac/linux
-    if (process.platform !== 'win32') {
-      return {
-        radminVpn: { installed: true, path: "/mock/radmin", version: "mock" },
-        aoeGame: { installed: true, path: "/mock/aoe", version: "mock" },
-      };
-    }
-
     return {
       radminVpn: radminStatus,
       aoeGame: gameStatus,
@@ -51,7 +43,6 @@ export class DependencyManager {
     path?: string;
     version?: string;
   }> {
-    if (process.platform !== 'win32') return { installed: true };
     logger.info("Checking Radmin VPN installation");
 
     // Check if we have a saved path
@@ -153,74 +144,29 @@ export class DependencyManager {
    * Find Radmin VPN in Windows Registry
    */
   private async findRadminInRegistry(): Promise<string | null> {
-    const registryKeys = [
-      'HKLM\\SOFTWARE\\Radmin VPN',
-      'HKLM\\SOFTWARE\\WOW6432Node\\Radmin VPN'
-    ];
+    try {
+      // Try to query registry for Radmin VPN installation path
+      const { stdout } = await execAsync(
+        'reg query "HKLM\\SOFTWARE\\Radmin VPN" /v InstallPath',
+      );
 
-    const exeNames = ["RvpnGui.exe", "Radmin.exe", "RadminVPN.exe"];
+      // Parse the output to get the path
+      const match = stdout.match(/InstallPath\s+REG_SZ\s+(.+)/);
+      if (match && match[1]) {
+        const installPath = match[1].trim();
+        const exePath = path.join(installPath, APP_CONFIG.RADMIN_VPN_EXE_NAME);
 
-    for (const key of registryKeys) {
-      try {
-        // Try to query registry for Radmin VPN installation path
-        const { stdout } = await execAsync(
-          `reg query "${key}" /v InstallPath`
-        );
-
-        // Parse the output to get the path
-        const match = stdout.match(/InstallPath\s+REG_SZ\s+(.+)/);
-        if (match && match[1]) {
-          const installPath = match[1].trim();
-
-          for (const exeName of exeNames) {
-            const exePath = path.join(installPath, exeName);
-            if (this.fileExists(exePath)) {
-              logger.info(`Found Radmin VPN via registry (${key}): ${exePath}`);
-              return exePath;
-            }
-          }
+        if (this.fileExists(exePath)) {
+          logger.info(`Found Radmin VPN via registry: ${exePath}`);
+          return exePath;
         }
-      } catch (error) {
-        // Registry key not found or query failed
       }
+    } catch (error) {
+      // Registry key not found or query failed
+      logger.debug("Radmin VPN not found in registry");
     }
 
     return null;
-  }
-
-  /**
-   * Check if a process is currently running
-   */
-  async isProcessRunning(exeName: string): Promise<boolean> {
-    if (process.platform !== 'win32') return true;
-    try {
-      const { stdout } = await execAsync(`tasklist /FI "IMAGENAME eq ${exeName}" /NH`);
-      return stdout.toLowerCase().includes(exeName.toLowerCase());
-    } catch (error) {
-      return false;
-    }
-  }
-
-  /**
-   * Ensure Radmin VPN is running, start if not
-   */
-  async ensureRadminRunning(): Promise<boolean> {
-    if (process.platform !== 'win32') return true;
-    const isRunning = await this.isProcessRunning(APP_CONFIG.RADMIN_VPN_EXE_NAME);
-    if (isRunning) return true;
-
-    const radmin = await this.checkRadminVpn();
-    if (radmin.installed && radmin.path) {
-      logger.info("Radmin VPN not running, attempting to start...");
-      try {
-        await execAsync(`start "" "${radmin.path}"`);
-        return true;
-      } catch (error) {
-        logger.error("Failed to start Radmin VPN", error);
-        return false;
-      }
-    }
-    return false;
   }
 
   /**

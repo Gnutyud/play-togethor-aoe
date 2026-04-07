@@ -68,7 +68,7 @@ export default function InRoomView() {
         console.error("Failed to load game path:", error);
       }
     };
-    
+
     loadGamePath();
 
     // Auto-connect VPN if not already connected
@@ -144,14 +144,27 @@ export default function InRoomView() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-600/20">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                />
               </svg>
             </div>
             <div>
-              <h1 className="text-xl font-black tracking-tight">{currentRoom.name}</h1>
+              <h1 className="text-xl font-black tracking-tight">
+                {currentRoom.name}
+              </h1>
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                {currentRoom.playerCount} / {currentRoom.maxPlayers} {t("players")}
+                {currentRoom.playerCount} / {currentRoom.maxPlayers}{" "}
+                {t("players")}
               </p>
             </div>
           </div>
@@ -168,25 +181,32 @@ export default function InRoomView() {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         <div className="max-w-5xl mx-auto p-6 md:p-8 space-y-8">
-          
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Action Panel */}
             <div className="lg:col-span-8 space-y-8">
               {/* VPN Section */}
               <div className="bg-gray-900/40 backdrop-blur-sm border border-white/5 rounded-2xl p-8 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-blue-600/10 transition-all"></div>
-                
+
                 <div className="flex items-center gap-3 mb-6">
                   <span className="w-1.5 h-6 bg-blue-500 rounded-full"></span>
-                  <h3 className="text-lg font-black uppercase tracking-widest text-gray-400">Radmin VPN</h3>
+                  <h3 className="text-lg font-black uppercase tracking-widest text-gray-400">
+                    Radmin VPN
+                  </h3>
                 </div>
 
-                <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 ${(isOwner || isAdmin) ? "" : "hidden"}`}>
+                <div
+                  className={`grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 ${isOwner || isAdmin ? "" : "hidden"}`}
+                >
                   <div className="bg-black/20 border border-white/5 rounded-xl p-4 relative group/item">
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t("radmin_id")}</p>
-                    <p className="font-mono text-sm text-blue-400 select-all">{currentRoom.radminNetworkId}</p>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">
+                      {t("radmin_id")}
+                    </p>
+                    <p className="font-mono text-sm text-blue-400 select-all">
+                      {currentRoom.radminNetworkId}
+                    </p>
                     {isAdmin && (
-                      <button 
+                      <button
                         onClick={() => {
                           setEditRadminId(currentRoom.radminNetworkId);
                           setEditRadminPass(currentRoom.radminNetworkPassword);
@@ -194,13 +214,19 @@ export default function InRoomView() {
                         }}
                         className="absolute top-2 right-2 p-1 bg-white/5 hover:bg-white/10 rounded opacity-0 group-hover/item:opacity-100 transition-opacity"
                       >
-                        <span className="text-[8px] font-black uppercase tracking-widest">{t("edit")}</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest">
+                          {t("edit")}
+                        </span>
                       </button>
                     )}
                   </div>
                   <div className="bg-black/20 border border-white/5 rounded-xl p-4">
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{t("radmin_pass")}</p>
-                    <p className="font-mono text-sm text-blue-400 select-all">{currentRoom.radminNetworkPassword}</p>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">
+                      {t("radmin_pass")}
+                    </p>
+                    <p className="font-mono text-sm text-blue-400 select-all">
+                      {currentRoom.radminNetworkPassword}
+                    </p>
                   </div>
                 </div>
 
@@ -208,7 +234,9 @@ export default function InRoomView() {
                   <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500">
                     <div className="flex items-center gap-3 px-6 py-4 bg-green-500/10 border border-green-500/20 rounded-xl">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
-                      <span className="text-sm font-bold text-green-400 uppercase tracking-wide">✓ {t("waiting")}... (Connected to Host Network)</span>
+                      <span className="text-sm font-bold text-green-400 uppercase tracking-wide">
+                        ✓ {t("waiting")}... (Connected to Host Network)
+                      </span>
                     </div>
                     <button
                       onClick={handleDisconnectVpn}
@@ -227,8 +255,12 @@ export default function InRoomView() {
                       {isConnectingVpn ? "..." : "🔌 Join Network"}
                     </button>
                     <div className="bg-white/5 rounded-xl p-5 border border-white/5">
-                      <h4 className="text-xs font-black uppercase tracking-widest text-blue-400 mb-2">{t("how_it_works")}</h4>
-                      <p className="text-xs text-gray-500 leading-relaxed font-medium">{t("how_it_works_desc")}</p>
+                      <h4 className="text-xs font-black uppercase tracking-widest text-blue-400 mb-2">
+                        {t("how_it_works")}
+                      </h4>
+                      <p className="text-xs text-gray-500 leading-relaxed font-medium">
+                        {t("how_it_works_desc")}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -238,14 +270,26 @@ export default function InRoomView() {
               <div className="bg-gray-900/40 backdrop-blur-sm border border-white/5 rounded-2xl p-8 group">
                 <div className="flex items-center gap-3 mb-6">
                   <span className="w-1.5 h-6 bg-green-500 rounded-full"></span>
-                  <h3 className="text-lg font-black uppercase tracking-widest text-gray-400">Battlefield</h3>
+                  <h3 className="text-lg font-black uppercase tracking-widest text-gray-400">
+                    Battlefield
+                  </h3>
                 </div>
 
                 <div className="space-y-6">
                   {!gamePath && (
                     <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 px-5 py-4 rounded-xl text-xs font-bold flex items-center gap-3">
-                      <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      <svg
+                        className="w-5 h-5 shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        />
                       </svg>
                       {t("select_game_path")}
                     </div>
@@ -253,7 +297,9 @@ export default function InRoomView() {
 
                   <button
                     onClick={handleLaunchGame}
-                    disabled={isLaunchingGame || !gamePath || !vpnConnection?.connected}
+                    disabled={
+                      isLaunchingGame || !gamePath || !vpnConnection?.connected
+                    }
                     className="w-full py-6 bg-green-600 hover:bg-green-500 text-white font-black uppercase tracking-widest text-lg rounded-xl shadow-xl shadow-green-900/20 active:scale-[0.98] transition-all disabled:bg-gray-800/50 disabled:text-gray-600 disabled:shadow-none"
                   >
                     {isLaunchingGame ? "..." : "🎮 " + t("launch_game")}
@@ -273,7 +319,9 @@ export default function InRoomView() {
               <div className="bg-gray-900/40 backdrop-blur-sm border border-white/5 rounded-2xl p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <span className="w-1.5 h-6 bg-indigo-500 rounded-full"></span>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-gray-400">{t("players")}</h3>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-gray-400">
+                    {t("players")}
+                  </h3>
                 </div>
 
                 <div className="space-y-3">
@@ -290,10 +338,14 @@ export default function InRoomView() {
                           </p>
                           <div className="flex gap-2">
                             {player.userId === user?.id && (
-                              <span className="text-[8px] font-black uppercase tracking-widest text-blue-500">YOU</span>
+                              <span className="text-[8px] font-black uppercase tracking-widest text-blue-500">
+                                YOU
+                              </span>
                             )}
                             {player.userId === currentRoom.ownerId && (
-                              <span className="text-[8px] font-black uppercase tracking-widest text-yellow-500">{t("room_owner")}</span>
+                              <span className="text-[8px] font-black uppercase tracking-widest text-yellow-500">
+                                {t("room_owner")}
+                              </span>
                             )}
                           </div>
                         </div>
@@ -313,49 +365,55 @@ export default function InRoomView() {
             </div>
           </div>
           {/* Admin Edit Modal */}
-      {isEditingRadmin && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#121214] border border-white/10 rounded-2xl w-full max-w-md p-8 shadow-2xl">
-            <h3 className="text-xl font-black mb-6 uppercase tracking-wider">Edit Radmin Info</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">Network ID</label>
-                <input
-                  type="text"
-                  value={editRadminId}
-                  onChange={(e) => setEditRadminId(e.target.value)}
-                  className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">Network Password</label>
-                <input
-                  type="text"
-                  value={editRadminPass}
-                  onChange={(e) => setEditRadminPass(e.target.value)}
-                  className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
-              <div className="flex gap-4 mt-8">
-                <button
-                  onClick={() => setIsEditingRadmin(false)}
-                  className="flex-1 py-3 text-xs font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors"
-                >
-                  {t("cancel")}
-                </button>
-                <button
-                  onClick={handleUpdateRadmin}
-                  disabled={isUpdatingRadmin}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg transition-all"
-                >
-                  {isUpdatingRadmin ? "..." : t("save_settings")}
-                </button>
+          {isEditingRadmin && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="bg-[#121214] border border-white/10 rounded-2xl w-full max-w-md p-8 shadow-2xl">
+                <h3 className="text-xl font-black mb-6 uppercase tracking-wider">
+                  Edit Radmin Info
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">
+                      Network ID
+                    </label>
+                    <input
+                      type="text"
+                      value={editRadminId}
+                      onChange={(e) => setEditRadminId(e.target.value)}
+                      className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">
+                      Network Password
+                    </label>
+                    <input
+                      type="text"
+                      value={editRadminPass}
+                      onChange={(e) => setEditRadminPass(e.target.value)}
+                      className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                  </div>
+                  <div className="flex gap-4 mt-8">
+                    <button
+                      onClick={() => setIsEditingRadmin(false)}
+                      className="flex-1 py-3 text-xs font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors"
+                    >
+                      {t("cancel")}
+                    </button>
+                    <button
+                      onClick={handleUpdateRadmin}
+                      disabled={isUpdatingRadmin}
+                      className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg transition-all"
+                    >
+                      {isUpdatingRadmin ? "..." : t("save_settings")}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
-    </div>
       </div>
     </div>
   );
