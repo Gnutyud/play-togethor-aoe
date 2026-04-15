@@ -101,7 +101,7 @@ export class GameLauncher {
       
       return new Promise((resolve) => {
         const { exec } = require("child_process");
-        exec(winCommand, { cwd: gameDir }, (error: any, stdout: any, stderr: any) => {
+        exec(winCommand, { cwd: gameDir }, (error: any, _stdout: any, stderr: any) => {
           if (error) {
             logger.error("Launch error:", error);
             resolve({
