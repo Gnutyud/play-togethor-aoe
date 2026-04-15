@@ -1,13 +1,7 @@
-import { app, BrowserWindow, dialog } from "electron";
+import { app, BrowserWindow } from "electron";
 import path from "path";
 import { setupIpcHandlers } from "./ipc/handlers";
 import { initializeLogger } from "./utils/logger";
-import {
-  createSplashWindow,
-  closeSplashWindow,
-  updateSplashProgress,
-  updateSplashStatus,
-} from "./windows/splash";
 
 const logger = initializeLogger();
 

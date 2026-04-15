@@ -3,7 +3,7 @@ import { IPC_CHANNELS } from "../shared/constants";
 import type {
   DependencyStatus,
   GameConfig,
-  RadminVpnConnection,
+  P2PConnection,
 } from "../shared/types";
 
 /**
@@ -33,15 +33,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
   ): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke(IPC_CHANNELS.GAME_LAUNCH, config),
 
-  // Radmin VPN Management
-  checkVpnStatus: (): Promise<RadminVpnConnection> =>
+  // P2P Networking Management
+  checkVpnStatus: (): Promise<P2PConnection> =>
     ipcRenderer.invoke(IPC_CHANNELS.VPN_CHECK_STATUS),
 
-  connectVpn: (
-    networkId: string,
-    password: string,
-  ): Promise<{ success: boolean; error?: string }> =>
-    ipcRenderer.invoke(IPC_CHANNELS.VPN_CONNECT, networkId, password),
+  connectVpn: (payload: any): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke(IPC_CHANNELS.VPN_CONNECT, payload),
 
   disconnectVpn: (): Promise<{ success: boolean }> =>
     ipcRenderer.invoke(IPC_CHANNELS.VPN_DISCONNECT),
@@ -70,11 +67,8 @@ declare global {
       launchGame: (
         config: GameConfig,
       ) => Promise<{ success: boolean; error?: string }>;
-      checkVpnStatus: () => Promise<RadminVpnConnection>;
-      connectVpn: (
-        networkId: string,
-        password: string,
-      ) => Promise<{ success: boolean; error?: string }>;
+      checkVpnStatus: () => Promise<P2PConnection>;
+      connectVpn: (payload: any) => Promise<{ success: boolean; error?: string }>;
       disconnectVpn: () => Promise<{ success: boolean }>;
       getSettings: <T = any>(key: string) => Promise<T>;
       setSettings: <T = any>(key: string, value: T) => Promise<void>;
