@@ -1,12 +1,11 @@
 import { exec } from "child_process";
 import { promisify } from "util";
-import { accessSync, constants } from "fs";
+import { accessSync, constants, existsSync } from "fs";
 import path from "path";
 import { app } from "electron";
 import { DependencyStatus } from "../../shared/types";
 import { GameDetector } from "./GameDetector";
 import { getLogger } from "../utils/logger";
-import { getStore } from "../config/store";
 
 const execAsync = promisify(exec);
 const logger = getLogger();
@@ -16,7 +15,6 @@ const logger = getLogger();
  * Checks and manages dependencies: P2P Network (N2N) and AOE I game
  */
 export class DependencyManager {
-  private store = getStore();
   private gameDetector = new GameDetector();
 
   /**
@@ -35,74 +33,72 @@ export class DependencyManager {
   }
 
   /**
-   * Check if P2P (N2N) binaries are available and driver is ready
+   * Check if P2P network tools (N2N) are available
    */
-  async checkP2PNetwork(): Promise<{
+  private async checkP2PNetwork(): Promise<{
     installed: boolean;
     hasDriver: boolean;
-    binaryPath?: string;
+    binaryPath: string;
   }> {
-    logger.info("Checking P2P Network binaries");
-
     const binDir = app.isPackaged
       ? path.join(process.resourcesPath, "bin", "n2n")
       : path.join(app.getAppPath(), "resources", "bin", "n2n");
 
-    const edgePath = path.join(binDir, "edge.exe");
     const wintunPath = path.join(binDir, "wintun.dll");
+    const edgePath = path.join(binDir, "edge.exe");
 
-    const hasBinaries = this.fileExists(edgePath) && this.fileExists(wintunPath);
-    
-    // Check if WinTun driver is likely available (basic check)
-    // In production, we might want a more robust check via registry
+    const hasBinaries = existsSync(edgePath) && existsSync(wintunPath);
+
+    // Check for WinTun driver in registry
     let hasDriver = false;
     if (process.platform === "win32") {
-        try {
-            // Check for WinTun registry key or similar
-            await execAsync('reg query "HKLM\\SYSTEM\\CurrentControlSet\\Services\\wintun"');
-            hasDriver = true;
-        } catch (e) {
-            hasDriver = false;
-        }
+      try {
+        await execAsync(
+          'reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}" /s /f "Wintun"',
+        );
+        hasDriver = true;
+      } catch (e) {
+        hasDriver = false;
+      }
     }
 
     return {
       installed: hasBinaries,
       hasDriver: hasDriver,
-      binaryPath: hasBinaries ? edgePath : undefined,
+      binaryPath: binDir,
     };
   }
 
   /**
-   * Check if AOE I game is installed
+   * Check if AOE I is installed and get its path
    */
-  async checkAoeGame(): Promise<{
+  private async checkAoeGame(): Promise<{
     installed: boolean;
-    path?: string;
-    version?: string;
+    path: string;
+    version: string;
   }> {
-    logger.info("Checking AOE I installation");
-
     const gamePath = await this.gameDetector.detectGamePath();
 
     if (gamePath) {
       return {
         installed: true,
         path: gamePath,
+        version: "1.0",
       };
     }
 
-    return { installed: false };
+    return {
+      installed: false,
+      path: "",
+      version: "",
+    };
   }
 
-  /**
-   * Check if file exists and is accessible
-   */
   private fileExists(filePath: string): boolean {
     try {
       accessSync(filePath, constants.F_OK);
       return true;
-    } catch {
+    } catch (e) {
       return false;
     }
   }
