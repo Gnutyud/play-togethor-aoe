@@ -51,12 +51,18 @@ export class GameLauncher {
 
       if (!gamePath) return { success: false, message: "Invalid game path" };
 
-      // Validate game path
+      // Validate game path - Only strict if not manually selected or if we want to be safe
+      // But if the user CHOSE this file, we should trust them more
       if (!this.gameDetector.validateGamePath(gamePath)) {
-        return {
-          success: false,
-          message: "Invalid game path. Please check the game path in settings.",
-        };
+        // If it's a .exe, allow it anyway if it was manually chosen
+        const isExe = path.extname(gamePath).toLowerCase() === ".exe";
+        if (!isExe) {
+          return {
+            success: false,
+            message: "Invalid game path. Please check the game path in settings.",
+          };
+        }
+        logger.info(`Path ${gamePath} failed strict validation but is an EXE, allowing manual choice.`);
       }
 
       // Kill existing game process if running
