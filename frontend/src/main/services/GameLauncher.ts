@@ -1,4 +1,4 @@
-import { spawn, ChildProcess } from "child_process";
+import { ChildProcess } from "child_process";
 import path from "path";
 import { GameConfig } from "../../shared/types";
 import { GameDetector } from "./GameDetector";
@@ -94,39 +94,34 @@ export class GameLauncher {
       const gameDir = path.dirname(gamePath);
       logger.info(`Launching game: ${gamePath} from CWD: ${gameDir}`, { args });
 
-      // Spawn game process
-      // On Windows with shell: true, we don't need extra quotes around the path
-      this.gameProcess = spawn(gamePath, args, {
-        cwd: gameDir,
-        detached: true,
-        stdio: "ignore",
-        shell: true,
+      // Build a single command string for Windows 'start'
+      // This is the most reliable way to mimic a double-click
+      const fullArgs = args.join(" ");
+      const winCommand = `start "" "${gamePath}" ${fullArgs}`;
+      
+      return new Promise((resolve) => {
+        const { exec } = require("child_process");
+        exec(winCommand, { cwd: gameDir }, (error: any, stdout: any, stderr: any) => {
+          if (error) {
+            logger.error("Launch error:", error);
+            resolve({
+              success: false,
+              message: `Debug Error: ${error.message}\nStderr: ${stderr}`,
+            });
+          } else {
+            logger.info("Game started via 'start' command");
+            resolve({
+              success: true,
+              message: "Game launched successfully",
+            });
+          }
+        });
       });
-
-      // Unref so parent process can exit independently
-      if (this.gameProcess) {
-        this.gameProcess.unref();
-
-        this.gameProcess.on("error", (error) => {
-          logger.error("Game process error:", error);
-        });
-
-        this.gameProcess.on("exit", (code) => {
-          logger.info(`Game process exited with code: ${code}`);
-          this.gameProcess = null;
-        });
-      }
-
-      return {
-        success: true,
-        message: "Game launched successfully",
-      };
     } catch (error: any) {
-      logger.error("Failed to launch game:", error);
-
+      logger.error("Fatal launch failure:", error);
       return {
         success: false,
-        message: `Failed to launch game: ${error.message}`,
+        message: `Fatal Debug: ${error.message}`,
       };
     }
   }
