@@ -70,13 +70,17 @@ export default function RoomListView() {
 
   const handleCreateRoom = async (
     name: string,
-    radminId: string,
-    radminPass: string,
+    p2pPassword = "",
     password?: string,
     type?: string
   ) => {
-    await createRoom(name, radminId, radminPass, password, type);
-    setIsCreatingRoom(false);
+    setIsCreatingRoom(true);
+    try {
+      await createRoom(name, p2pPassword, password, type);
+      setIsCreatingRoom(false);
+    } catch (err: any) {
+      console.error("Failed to create room:", err);
+    }
   };
 
   const handleDeleteRoom = async (roomId: string) => {

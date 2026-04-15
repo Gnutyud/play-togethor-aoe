@@ -29,8 +29,8 @@ export interface Room {
 }
 
 export interface RoomWithNetwork extends Room {
-  radminNetworkId: string;
-  radminNetworkPassword: string;
+  p2pCommunity: string;
+  p2pPassword?: string;
 }
 
 export interface GameConfig {
@@ -43,10 +43,10 @@ export interface GameConfig {
 }
 
 export interface DependencyStatus {
-  radminVpn: {
+  p2pNetwork: {
     installed: boolean;
-    path?: string;
-    version?: string;
+    hasDriver: boolean;
+    binaryPath?: string;
   };
   aoeGame: {
     installed: boolean;
@@ -55,11 +55,11 @@ export interface DependencyStatus {
   };
 }
 
-export interface RadminVpnConnection {
+export interface P2PConnection {
   connected: boolean;
-  networkId?: string;
-  networkName?: string;
-  password?: string;
+  virtualIp?: string;
+  community?: string;
+  error?: string;
 }
 
 // API Response types

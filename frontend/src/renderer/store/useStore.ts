@@ -3,7 +3,7 @@ import {
   User,
   Room,
   RoomWithNetwork,
-  RadminVpnConnection,
+  P2PConnection,
 } from "../../shared/types";
 
 type Language = "vi" | "en";
@@ -22,8 +22,8 @@ interface AppState {
   updateRoom: (roomId: string, updates: Partial<Room>) => void;
 
   // VPN
-  vpnConnection: RadminVpnConnection | null;
-  setVpnConnection: (connection: RadminVpnConnection | null) => void;
+  vpnConnection: P2PConnection | null;
+  setVpnConnection: (connection: P2PConnection | null) => void;
 
   // UI State
   isCreatingRoom: boolean;

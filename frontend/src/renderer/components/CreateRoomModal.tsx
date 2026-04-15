@@ -7,8 +7,7 @@ interface CreateRoomModalProps {
   onClose: () => void;
   onCreate: (
     name: string,
-    radminId: string,
-    radminPass: string,
+    p2pPassword?: string,
     password?: string,
     type?: string
   ) => Promise<void>;
@@ -22,8 +21,7 @@ export default function CreateRoomModal({
   const { t } = useI18n();
   const { user } = useAuth();
   const [roomName, setRoomName] = useState("");
-  const [radminId, setRadminId] = useState("");
-  const [radminPass, setRadminPass] = useState("");
+  const [p2pPassword, setP2pPassword] = useState("");
   const [roomType, setRoomType] = useState<"custom" | "default">("custom");
   const [password, setPassword] = useState("");
   const [usePassword, setUsePassword] = useState(false);
@@ -41,11 +39,6 @@ export default function CreateRoomModal({
       return;
     }
 
-    if (!radminId.trim() || !radminPass.trim()) {
-      setError("Radmin Network ID and Password are required");
-      return;
-    }
-
     if (usePassword && !password.trim()) {
       setError("Password is required when room is private");
       return;
@@ -56,16 +49,14 @@ export default function CreateRoomModal({
     try {
       await onCreate(
         roomName,
-        radminId,
-        radminPass,
+        p2pPassword || undefined,
         usePassword ? password : undefined,
         user?.role === "admin" ? roomType : undefined
       );
 
       // Reset form and close
       setRoomName("");
-      setRadminId("");
-      setRadminPass("");
+      setP2pPassword("");
       setPassword("");
       setUsePassword(false);
       setRoomType("custom");
@@ -82,8 +73,7 @@ export default function CreateRoomModal({
   const handleClose = () => {
     if (!loading) {
       setRoomName("");
-      setRadminId("");
-      setRadminPass("");
+      setP2pPassword("");
       setPassword("");
       setUsePassword(false);
       setError("");
@@ -148,37 +138,19 @@ export default function CreateRoomModal({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("radmin_id")}
-              </label>
-              <input
-                type="text"
-                value={radminId}
-                onChange={(e) => setRadminId(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 hover:bg-gray-700/50 transition-all placeholder-gray-600 font-mono"
-                placeholder="Network ID"
-                disabled={loading}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                {t("radmin_pass")}
-              </label>
-              <input
-                type="text"
-                value={radminPass}
-                onChange={(e) => setRadminPass(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 hover:bg-gray-700/50 transition-all placeholder-gray-600 font-mono"
-                placeholder="Password"
-                disabled={loading}
-              />
-            </div>
+          <div className="flex items-center gap-2 py-1">
+            <input
+              type="checkbox"
+              id="privateNetwork"
+              checked={!!p2pPassword}
+              onChange={(e) => setP2pPassword(e.target.checked ? "secured_mesh" : "")}
+              className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-indigo-600 focus:ring-offset-gray-900"
+              disabled={loading}
+            />
+            <label htmlFor="privateNetwork" className="text-sm text-gray-300 select-none font-bold">
+               Enable Encrypted P2P Grid
+            </label>
           </div>
-          <p className="text-[10px] text-gray-500 italic -mt-2">
-            {t("radmin_notice")}
-          </p>
 
           <div className="flex items-center gap-2 py-1">
             <input

@@ -143,15 +143,13 @@ export function useRooms() {
   const createRoom = useCallback(
     async (
       name: string,
-      radminNetworkId: string,
-      radminNetworkPassword: string,
+      p2pPassword?: string,
       password?: string,
       type?: string
     ) => {
       const room = await api.createRoom(
         name,
-        radminNetworkId,
-        radminNetworkPassword,
+        p2pPassword,
         password,
         type
       );

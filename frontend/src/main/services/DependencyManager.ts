@@ -2,9 +2,8 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { accessSync, constants } from "fs";
 import path from "path";
-import { shell } from "electron";
+import { app } from "electron";
 import { DependencyStatus } from "../../shared/types";
-import { APP_CONFIG } from "../config/constants";
 import { GameDetector } from "./GameDetector";
 import { getLogger } from "../utils/logger";
 import { getStore } from "../config/store";
@@ -14,7 +13,7 @@ const logger = getLogger();
 
 /**
  * DependencyManager
- * Checks and manages dependencies: Radmin VPN and AOE I game
+ * Checks and manages dependencies: P2P Network (N2N) and AOE I game
  */
 export class DependencyManager {
   private store = getStore();
@@ -26,71 +25,52 @@ export class DependencyManager {
   async checkAll(): Promise<DependencyStatus> {
     logger.info("Checking all dependencies");
 
-    const radminStatus = await this.checkRadminVpn();
+    const p2pStatus = await this.checkP2PNetwork();
     const gameStatus = await this.checkAoeGame();
 
     return {
-      radminVpn: radminStatus,
+      p2pNetwork: p2pStatus,
       aoeGame: gameStatus,
     };
   }
 
   /**
-   * Check if Radmin VPN is installed
+   * Check if P2P (N2N) binaries are available and driver is ready
    */
-  async checkRadminVpn(): Promise<{
+  async checkP2PNetwork(): Promise<{
     installed: boolean;
-    path?: string;
-    version?: string;
+    hasDriver: boolean;
+    binaryPath?: string;
   }> {
-    logger.info("Checking Radmin VPN installation");
+    logger.info("Checking P2P Network binaries");
 
-    // Check if we have a saved path
-    const savedPath = this.store.get("radminVpnPath");
-    if (savedPath && this.fileExists(savedPath)) {
-      return {
-        installed: true,
-        path: savedPath,
-      };
+    const binDir = app.isPackaged
+      ? path.join(process.resourcesPath, "bin", "n2n")
+      : path.join(app.getAppPath(), "resources", "bin", "n2n");
+
+    const edgePath = path.join(binDir, "edge.exe");
+    const wintunPath = path.join(binDir, "wintun.dll");
+
+    const hasBinaries = this.fileExists(edgePath) && this.fileExists(wintunPath);
+    
+    // Check if WinTun driver is likely available (basic check)
+    // In production, we might want a more robust check via registry
+    let hasDriver = false;
+    if (process.platform === "win32") {
+        try {
+            // Check for WinTun registry key or similar
+            await execAsync('reg query "HKLM\\SYSTEM\\CurrentControlSet\\Services\\wintun"');
+            hasDriver = true;
+        } catch (e) {
+            hasDriver = false;
+        }
     }
 
-    // Try common installation paths
-    for (const basePath of APP_CONFIG.RADMIN_VPN_PATHS) {
-      const exePath = path.join(basePath, APP_CONFIG.RADMIN_VPN_EXE_NAME);
-
-      if (this.fileExists(exePath)) {
-        this.store.set("radminVpnPath", exePath);
-        this.store.set("radminVpnInstalled", true);
-
-        logger.info(`Found Radmin VPN at: ${exePath}`);
-
-        return {
-          installed: true,
-          path: exePath,
-        };
-      }
-    }
-
-    // Try to find via registry (Windows)
-    try {
-      const registryPath = await this.findRadminInRegistry();
-      if (registryPath) {
-        this.store.set("radminVpnPath", registryPath);
-        this.store.set("radminVpnInstalled", true);
-
-        return {
-          installed: true,
-          path: registryPath,
-        };
-      }
-    } catch (error) {
-      logger.error("Error checking registry for Radmin VPN", error);
-    }
-
-    logger.warn("Radmin VPN not found");
-    this.store.set("radminVpnInstalled", false);
-
-    return { installed: false };
+    return {
+      installed: hasBinaries,
+      hasDriver: hasDriver,
+      binaryPath: hasBinaries ? edgePath : undefined,
+    };
   }
 
   /**
@@ -113,60 +93,6 @@ export class DependencyManager {
     }
 
     return { installed: false };
-  }
-
-  /**
-   * Guide user to install Radmin VPN
-   * Opens download page in browser
-   */
-  async installRadminVpn(): Promise<{ success: boolean; message: string }> {
-    logger.info("Opening Radmin VPN download page");
-
-    try {
-      await shell.openExternal(APP_CONFIG.RADMIN_VPN_DOWNLOAD_URL);
-
-      return {
-        success: true,
-        message:
-          "Opened Radmin VPN download page. Please install and restart the app.",
-      };
-    } catch (error: any) {
-      logger.error("Failed to open Radmin VPN download page", error);
-
-      return {
-        success: false,
-        message: `Failed to open download page: ${error.message}`,
-      };
-    }
-  }
-
-  /**
-   * Find Radmin VPN in Windows Registry
-   */
-  private async findRadminInRegistry(): Promise<string | null> {
-    try {
-      // Try to query registry for Radmin VPN installation path
-      const { stdout } = await execAsync(
-        'reg query "HKLM\\SOFTWARE\\Radmin VPN" /v InstallPath',
-      );
-
-      // Parse the output to get the path
-      const match = stdout.match(/InstallPath\s+REG_SZ\s+(.+)/);
-      if (match && match[1]) {
-        const installPath = match[1].trim();
-        const exePath = path.join(installPath, APP_CONFIG.RADMIN_VPN_EXE_NAME);
-
-        if (this.fileExists(exePath)) {
-          logger.info(`Found Radmin VPN via registry: ${exePath}`);
-          return exePath;
-        }
-      }
-    } catch (error) {
-      // Registry key not found or query failed
-      logger.debug("Radmin VPN not found in registry");
-    }
-
-    return null;
   }
 
   /**

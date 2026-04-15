@@ -3,7 +3,7 @@ import { IPC_CHANNELS } from "../../shared/constants";
 import { DependencyManager } from "../services/DependencyManager";
 import { GameDetector } from "../services/GameDetector";
 import { GameLauncher } from "../services/GameLauncher";
-import { RadminVpnManager } from "../services/RadminVpnManager";
+import { NetworkManager } from "../services/NetworkManager";
 import { getStore } from "../config/store";
 import { getLogger } from "../utils/logger";
 
@@ -17,7 +17,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
   const dependencyManager = new DependencyManager();
   const gameDetector = new GameDetector();
   const gameLauncher = new GameLauncher();
-  const vpnManager = new RadminVpnManager();
+  const vpnManager = NetworkManager.getInstance();
 
   logger.info("Setting up IPC handlers");
 
@@ -25,11 +25,6 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
   ipcMain.handle(IPC_CHANNELS.DEPENDENCY_CHECK, async () => {
     logger.info("Checking dependencies");
     return await dependencyManager.checkAll();
-  });
-
-  ipcMain.handle(IPC_CHANNELS.DEPENDENCY_INSTALL_RADMIN, async () => {
-    logger.info("Installing Radmin VPN");
-    return await dependencyManager.installRadminVpn();
   });
 
   // ===== Game Management =====
@@ -99,19 +94,20 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
   // ===== Radmin VPN Management =====
   ipcMain.handle(IPC_CHANNELS.VPN_CHECK_STATUS, async () => {
     logger.info("Checking VPN status");
-    return vpnManager.getConnectionStatus();
+    return vpnManager.getStatus();
   });
 
   ipcMain.handle(
     IPC_CHANNELS.VPN_CONNECT,
-    async (_event: IpcMainInvokeEvent, connection: any) => {
-      logger.info("Connecting to VPN", { networkId: connection.networkId });
-      return await vpnManager.connect(connection);
+    async (_event: IpcMainInvokeEvent, payload: any) => {
+      logger.info("Connecting to P2P VPN", { roomId: payload.roomId });
+      const { userId, roomId, password } = payload;
+      return await vpnManager.connect(userId, roomId, password);
     },
   );
 
   ipcMain.handle(IPC_CHANNELS.VPN_DISCONNECT, async () => {
-    logger.info("Disconnecting from VPN");
+    logger.info("Disconnecting from P2P VPN");
 
     try {
       await vpnManager.disconnect();

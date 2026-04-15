@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DependencyStatus } from "../../shared/types";
 import { useI18n } from "../config/i18n";
 
@@ -8,34 +8,38 @@ interface SetupScreenProps {
 }
 
 export default function SetupScreen({
-  dependencies,
+  dependencies: initialDependencies,
   onSetupComplete,
 }: SetupScreenProps) {
   const { t, lang, changeLanguage } = useI18n();
-  const [isInstalling, setIsInstalling] = useState(false);
   const [message, setMessage] = useState("");
+  const [dependencies, setDependencies] = useState<DependencyStatus>(initialDependencies);
 
-  const handleInstallRadmin = async () => {
-    setIsInstalling(true);
-    setMessage(t("start_app") + "...");
+  useEffect(() => {
+    const checkDependencies = async () => {
+      try {
+        const status = await (window as any).electronAPI.checkDependencies();
+        setDependencies(status);
 
-    try {
-      const result = await (window as any).electronAPI.installRadminVpn();
-      setMessage(result.message);
-    } catch (error: any) {
-      setMessage(`Error: ${error.message}`);
-    } finally {
-      setIsInstalling(false);
-    }
-  };
+        if (status.aoeGame.installed && status.p2pNetwork.installed) {
+          // All ready
+        }
+      } catch (error) {
+        console.error("Failed to check dependencies:", error);
+      }
+    };
+
+    checkDependencies();
+    const interval = setInterval(checkDependencies, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSelectGamePath = async () => {
     try {
       const result = await (window as any).electronAPI.selectGamePath();
 
       if (result.success) {
-        setMessage(t("start_app") + "!");
-        // Recheck dependencies
+        setMessage("Game path set successfully!");
         setTimeout(() => {
           window.location.reload();
         }, 1500);
@@ -47,8 +51,7 @@ export default function SetupScreen({
     }
   };
 
-  const canComplete =
-    dependencies.radminVpn.installed && dependencies.aoeGame.installed;
+  const allReady = dependencies.p2pNetwork.installed && dependencies.aoeGame.installed;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#0a0a0c] relative overflow-hidden">
@@ -82,49 +85,37 @@ export default function SetupScreen({
             <h1 className="text-4xl font-black text-white mb-3 tracking-tight bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent">
               {t("setup_title")}
             </h1>
-            <p className="text-gray-400 font-medium">Ready to conquer the battlefield?</p>
+            <p className="text-gray-400 font-medium font-mono text-xs uppercase tracking-widest">Version 2.0.0 Integrated</p>
           </header>
 
           <div className="space-y-8">
-            {/* Radmin VPN Section */}
+            {/* P2P Networking Section */}
             <div className="group">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${dependencies.radminVpn.installed ? 'bg-green-500/10' : 'bg-yellow-500/10'}`}>
-                    <svg className={`w-5 h-5 ${dependencies.radminVpn.installed ? 'text-green-500' : 'text-yellow-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  <div className={`p-2 rounded-lg ${dependencies.p2pNetwork.installed ? 'bg-indigo-500/10' : 'bg-yellow-500/10'}`}>
+                    <svg className={`w-5 h-5 ${dependencies.p2pNetwork.installed ? 'text-indigo-400' : 'text-yellow-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-bold text-white tracking-wide">Radmin VPN</h3>
+                  <h3 className="text-lg font-bold text-white tracking-wide">P2P Networking</h3>
                 </div>
-                {dependencies.radminVpn.installed ? (
-                  <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-green-500/20">
-                    Done
+                {dependencies.p2pNetwork.installed ? (
+                  <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-full border border-indigo-500/20">
+                    Ready
                   </span>
                 ) : (
                   <span className="px-3 py-1 bg-yellow-500/10 text-yellow-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-yellow-500/20 animate-pulse">
-                    Required
+                    Initializing
                   </span>
                 )}
               </div>
               
-              {!dependencies.radminVpn.installed && (
-                <div className="bg-blue-600/5 border border-blue-500/20 rounded-xl p-5 mb-4 group-hover:bg-blue-600/10 transition-all">
-                  <p className="text-sm text-blue-200/80 leading-relaxed mb-4">
-                    Radmin VPN helps you connect to other players. We'll try to install it automatically for you.
+              {!dependencies.p2pNetwork.installed && (
+                <div className="bg-indigo-600/5 border border-indigo-500/20 rounded-xl p-5 mb-4 group-hover:bg-indigo-600/10 transition-all">
+                  <p className="text-xs text-indigo-200/60 leading-relaxed font-bold italic">
+                    Integrated P2P engine is required. Please ensure edge.exe and wintun.dll are present in the resources folder.
                   </p>
-                  <button
-                    onClick={handleInstallRadmin}
-                    disabled={isInstalling}
-                    className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm font-bold transition-colors group-hover:translate-x-1 duration-300"
-                  >
-                    {isInstalling ? "Downloading..." : "Download & Install Manually →"}
-                  </button>
-                </div>
-              )}
-              {dependencies.radminVpn.path && (
-                <div className="bg-white/5 rounded-lg px-4 py-2 flex items-center gap-2">
-                  <span className="text-[10px] text-gray-500 font-mono truncate">{dependencies.radminVpn.path}</span>
                 </div>
               )}
             </div>
@@ -176,13 +167,13 @@ export default function SetupScreen({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2 2 2 0 012 2v.5m.43 3.935A2 2 0 0118 20.312M11.732 3.469A2 2 0 0115 5.5l.044.22a2 2 0 001.294 1.515l3.227 1.076a2 2 0 011.163 2.187l-.43 3.935" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-white tracking-wide">Region</h3>
+                <h3 className="text-lg font-bold text-white tracking-wide">Infrastructure</h3>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                 <button className="flex items-center justify-center gap-2 px-5 py-4 bg-blue-600/20 border border-blue-500/50 rounded-xl text-white font-bold transition-all shadow-lg shadow-blue-900/10">
-                   <span className="text-lg">🇻🇳</span> Vietnam
+                 <button className="flex items-center justify-center gap-2 px-5 py-4 bg-indigo-600/20 border border-indigo-500/50 rounded-xl text-white font-bold transition-all shadow-lg shadow-indigo-900/10">
+                   <span className="text-lg">🇻🇳</span> Asia Mesh
                  </button>
-                 <button className="flex items-center justify-center gap-2 px-5 py-4 bg-gray-800/30 border border-gray-700/50 rounded-xl text-gray-500 font-bold hover:bg-gray-800 hover:text-gray-300 transition-all">
+                 <button className="flex items-center justify-center gap-2 px-5 py-4 bg-gray-800/30 border border-gray-700/50 rounded-xl text-gray-500 font-bold hover:bg-gray-800 hover:text-gray-300 transition-all opacity-50 cursor-not-allowed">
                    <span className="text-lg">🌎</span> Global
                  </button>
               </div>
@@ -193,24 +184,24 @@ export default function SetupScreen({
           <div className="mt-12">
             {message && (
               <div className="mb-6 animate-in slide-in-from-bottom-2 duration-300">
-                <div className="bg-blue-600/10 border border-blue-500/20 text-blue-300 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping"></div>
+                <div className="bg-indigo-600/10 border border-indigo-500/20 text-indigo-300 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3">
+                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-ping"></div>
                   {message}
                 </div>
               </div>
             )}
 
-            {canComplete ? (
+            {allReady ? (
               <button
                 onClick={onSetupComplete}
-                className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-xl shadow-blue-500/20 active:scale-[0.98] animate-in zoom-in-95 duration-500"
+                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-xl shadow-indigo-500/20 active:scale-[0.98] animate-in zoom-in-95 duration-500"
               >
                 {t("start_app")}
               </button>
             ) : (
               <div className="bg-gray-900/60 p-4 rounded-xl text-center">
                 <p className="text-gray-500 text-[11px] font-bold uppercase tracking-widest leading-relaxed">
-                  Configuration required to access the launcher
+                  Dependency check in progress...
                 </p>
               </div>
             )}

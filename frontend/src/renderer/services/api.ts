@@ -139,16 +139,14 @@ class ApiService {
 
   async createRoom(
     name: string,
-    radminNetworkId: string,
-    radminNetworkPassword: string,
+    p2pPassword?: string,
     password?: string,
     type?: string
   ): Promise<Room> {
     const response = await this.client.post<{ room: Room }>("/api/rooms", {
       name,
       password,
-      radminNetworkId,
-      radminNetworkPassword,
+      p2pPassword,
       type,
     });
     return response.data.room;
@@ -182,8 +180,7 @@ class ApiService {
     roomId: string,
     updates: {
       name?: string;
-      radminNetworkId?: string;
-      radminNetworkPassword?: string;
+      p2pPassword?: string;
       maxPlayers?: number;
       type?: string;
     }
