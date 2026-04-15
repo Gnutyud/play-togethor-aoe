@@ -1,6 +1,6 @@
 import { exec } from "child_process";
 import { promisify } from "util";
-import { accessSync, constants, existsSync } from "fs";
+import { existsSync } from "fs";
 import path from "path";
 import { app } from "electron";
 import { DependencyStatus } from "../../shared/types";
@@ -92,14 +92,5 @@ export class DependencyManager {
       path: "",
       version: "",
     };
-  }
-
-  private fileExists(filePath: string): boolean {
-    try {
-      accessSync(filePath, constants.F_OK);
-      return true;
-    } catch (e) {
-      return false;
-    }
   }
 }
