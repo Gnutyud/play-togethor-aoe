@@ -24,16 +24,32 @@ export class GameLauncher {
 
     try {
       // Get game path
-      const gamePath =
-        config.gamePath || (await this.gameDetector.detectGamePath());
+      let gamePath = config.gamePath || (await this.gameDetector.detectGamePath());
 
       if (!gamePath) {
         return {
           success: false,
-          message:
-            "AOE I game not found. Please set the game path in settings.",
+          message: "AOE I game not found. Please set the game path in settings.",
         };
       }
+
+      // If the path is a directory, resolve it to the executable
+      const isDirectory = path.extname(gamePath) === "";
+      if (isDirectory) {
+        logger.info(`Provided path is a directory, searching for executable: ${gamePath}`);
+        const resolvedPath = (this.gameDetector as any).findGameExecutable(gamePath);
+        if (resolvedPath) {
+          gamePath = resolvedPath;
+          logger.info(`Resolved directory to executable: ${gamePath}`);
+        } else {
+          return {
+            success: false,
+            message: "No valid game executable found in the selected folder. Look for Empires.exe or similar.",
+          };
+        }
+      }
+
+      if (!gamePath) return { success: false, message: "Invalid game path" };
 
       // Validate game path
       if (!this.gameDetector.validateGamePath(gamePath)) {
@@ -72,31 +88,28 @@ export class GameLauncher {
       const gameDir = path.dirname(gamePath);
       logger.info(`Launching game: ${gamePath} from CWD: ${gameDir}`, { args });
 
-      // On Windows, we often need to wrap the command in quotes if it has spaces
-      const command = process.platform === 'win32' ? `"${gamePath}"` : gamePath;
-
       // Spawn game process
-      this.gameProcess = spawn(command, args, {
+      // On Windows with shell: true, we don't need extra quotes around the path
+      this.gameProcess = spawn(gamePath, args, {
         cwd: gameDir,
         detached: true,
         stdio: "ignore",
         shell: true,
-        windowsHide: true,
       });
 
       // Unref so parent process can exit independently
       if (this.gameProcess) {
         this.gameProcess.unref();
+
+        this.gameProcess.on("error", (error) => {
+          logger.error("Game process error:", error);
+        });
+
+        this.gameProcess.on("exit", (code) => {
+          logger.info(`Game process exited with code: ${code}`);
+          this.gameProcess = null;
+        });
       }
-
-      this.gameProcess.on("error", (error) => {
-        logger.error("Game process error:", error);
-      });
-
-      this.gameProcess.on("exit", (code) => {
-        logger.info(`Game process exited with code: ${code}`);
-        this.gameProcess = null;
-      });
 
       return {
         success: true,

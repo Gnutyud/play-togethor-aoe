@@ -123,7 +123,7 @@ export class GameDetector {
   /**
    * Find game executable in a directory
    */
-  private findGameExecutable(dirPath: string): string | null {
+  public findGameExecutable(dirPath: string): string | null {
     try {
       const files = readdirSync(dirPath);
 
