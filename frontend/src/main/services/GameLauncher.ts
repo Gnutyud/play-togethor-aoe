@@ -94,34 +94,50 @@ export class GameLauncher {
       const gameDir = path.dirname(gamePath);
       logger.info(`Launching game: ${gamePath} from CWD: ${gameDir}`, { args });
 
-      // Build a single command string for Windows 'start'
-      // This is the most reliable way to mimic a double-click
-      const fullArgs = args.join(" ");
-      const winCommand = `start "" "${gamePath}" ${fullArgs}`;
+      // Using Electron's native shell.openPath - the most reliable way to "double-click" a file
+      const { shell } = require("electron");
       
-      return new Promise((resolve) => {
-        const { exec } = require("child_process");
-        exec(winCommand, { cwd: gameDir }, (error: any, _stdout: any, stderr: any) => {
-          if (error) {
-            logger.error("Launch error:", error);
-            resolve({
-              success: false,
-              message: `Debug Error: ${error.message}\nStderr: ${stderr}`,
-            });
-          } else {
-            logger.info("Game started via 'start' command");
-            resolve({
-              success: true,
-              message: "Game launched successfully",
-            });
-          }
+      try {
+        // Prepare additional args if any (though openPath mostly just opens the file)
+        // If args are needed, we might still need a fallback or different method
+        // But let's try the cleanest way first
+        const errorMessage = await shell.openPath(gamePath);
+        
+        if (errorMessage) {
+          logger.error("shell.openPath error:", errorMessage);
+          return {
+            success: false,
+            message: `Windows Error: ${errorMessage}. Try running as Administrator.`,
+          };
+        }
+
+        logger.info("Game opened successfully via shell.openPath");
+        return {
+          success: true,
+          message: "Game launched successfully",
+        };
+      } catch (err: any) {
+        logger.error("Native launch failed, attempting fallback:", err);
+        // Fallback to a simpler exec if native shell fails
+        return new Promise((resolve) => {
+          const { exec } = require("child_process");
+          exec(`start "" "${gamePath}"`, { cwd: gameDir }, (error: any, _stdout: any, stderr: any) => {
+            if (error) {
+              resolve({
+                success: false,
+                message: `Launch Failed: ${error.message}\n${stderr}`,
+              });
+            } else {
+              resolve({ success: true, message: "Launched via fallback" });
+            }
+          });
         });
-      });
+      }
     } catch (error: any) {
       logger.error("Fatal launch failure:", error);
       return {
         success: false,
-        message: `Fatal Debug: ${error.message}`,
+        message: `Fatal Launcher Error: ${error.message}`,
       };
     }
   }
